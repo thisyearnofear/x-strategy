@@ -202,7 +202,6 @@ export default class Planes {
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,
       transparent: true,
-      //depthWrite: true,
       uniforms: {
         uTime: { value: 0 },
         uMaxXdisplacement: {
