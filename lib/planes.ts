@@ -40,16 +40,16 @@ export default class Planes {
     lastX: number
     lastY: number
   } = {
-    xCurrent: 0,
-    xTarget: 0,
-    yCurrent: 0,
-    yTarget: 0,
-    isDown: false,
-    startX: 0,
-    startY: 0,
-    lastX: 0,
-    lastY: 0,
-  }
+      xCurrent: 0,
+      xTarget: 0,
+      yCurrent: 0,
+      yTarget: 0,
+      isDown: false,
+      startX: 0,
+      startY: 0,
+      lastX: 0,
+      lastY: 0,
+    }
   shaderParameters = {
     maxX: 0,
     maxY: 0,
@@ -59,10 +59,10 @@ export default class Planes {
     current: number
     direction: number
   } = {
-    target: 0,
-    current: 0,
-    direction: 0,
-  }
+      target: 0,
+      current: 0,
+      direction: 0,
+    }
   dragSensitivity: number = 1
   dragDamping: number = 0.1
   dragElement?: HTMLElement
@@ -93,14 +93,12 @@ export default class Planes {
   }
 
   async fetchCovers() {
-    //const urls: string[] = await get30NewReleaseCovers()
-    const urls: string[] = new Array(30)
-      .fill(0)
-      .map((_, i) => `/covers/image_${i}.jpg`)
+    const urls: string[] = await get30NewReleaseCovers()
     await this.loadTextureAtlas(urls)
     this.createBlurryAtlas()
     this.fillMeshData()
   }
+
 
   async loadTextureAtlas(urls: string[]) {
     // Load all images with CORS-safe approach to avoid tainted canvas
@@ -311,7 +309,7 @@ export default class Planes {
       this.drag.isDown = false
       try {
         element.releasePointerCapture(e.pointerId)
-      } catch {}
+      } catch { }
     }
 
     element.addEventListener("pointerdown", onPointerDown)

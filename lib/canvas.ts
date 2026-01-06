@@ -1,6 +1,6 @@
 import * as THREE from "three"
 import { Dimensions, Size } from "./types/types"
-import { OrbitControls } from "three/addons/controls/OrbitControls.js"
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js"
 import GUI from "lil-gui"
 import Planes from "./planes"
 
