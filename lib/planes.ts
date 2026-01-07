@@ -5,6 +5,7 @@ import fragmentShader from "./shaders/fragment.glsl"
 import { Size } from "./types/types"
 import normalizeWheel from "normalize-wheel"
 import { STRATEGIES } from "./data/strategies"
+import { StrategyCardGenerator } from "./utils/cardGenerator"
 
 interface Props {
   scene: THREE.Scene
@@ -98,26 +99,25 @@ export default class Planes {
   }
 
   async fetchStrategyProfiles() {
-    // Get profile images from strategies (creator avatars)
-    // Filter out undefined avatars and repeat to fill the gallery with 400 instances
-    const profileUrls = STRATEGIES
-      .map(s => s.creator.avatarUrl)
-      .filter((url): url is string => url !== undefined)
+    // 1. Generate unique card textures for each strategy
+    const generator = new StrategyCardGenerator()
+    const uniqueCardPromises = STRATEGIES.map(s => generator.generateCard(s))
+    const uniqueCardUrls = await Promise.all(uniqueCardPromises)
     
-    if (profileUrls.length === 0) {
-      console.error('No profile URLs found in strategies')
+    if (uniqueCardUrls.length === 0) {
+      console.error('No strategies found')
       return
     }
     
-    // Repeat profiles to fill meshCount (400 instances)
+    // 2. Repeat these textures to fill meshCount (400 instances)
     const repeatedUrls: string[] = []
-    const repetitions = Math.ceil(this.meshCount / profileUrls.length)
+    const repetitions = Math.ceil(this.meshCount / uniqueCardUrls.length)
     
     for (let i = 0; i < repetitions; i++) {
-      repeatedUrls.push(...profileUrls)
+      repeatedUrls.push(...uniqueCardUrls)
     }
     
-    // Trim to exact meshCount
+    // 3. Trim to exact meshCount
     const urls = repeatedUrls.slice(0, this.meshCount)
     
     await this.loadTextureAtlas(urls)
@@ -233,15 +233,6 @@ export default class Planes {
             this.shaderParameters.maxX,
             this.shaderParameters.maxY
           ),
-        },
-        uWrapperTexture: {
-          value: new THREE.TextureLoader().load("/spt-3.png", (tex) => {
-            //make the texture as sharp as possible
-            tex.minFilter = THREE.NearestFilter
-            tex.magFilter = THREE.NearestFilter
-            tex.generateMipmaps = false
-            tex.needsUpdate = true
-          }),
         },
         uAtlas: new THREE.Uniform(this.atlasTexture),
         uBlurryAtlas: new THREE.Uniform(this.blurryAtlasTexture),
@@ -374,6 +365,7 @@ export default class Planes {
       
       // Store status as float for shader (0=draft, 1=active, 2=ending_soon, 3=completed_success, 4=completed_failure)
       const statusMap: Record<string, number> = {
+        'pending_creator': 0, // Treated like draft for effects
         'draft': 0,
         'active': 1,
         'ending_soon': 2,
@@ -446,7 +438,7 @@ export default class Planes {
     window.addEventListener("pointerup", onPointerUp)
   }
 
-  onWheel(event: MouseEvent) {
+  onWheel(event: WheelEvent) {
     if (this.paused) return
     const normalizedWheel = normalizeWheel(event)
 

@@ -81,7 +81,7 @@ export class StrategyCardGenerator {
 
   /**
    * Generate a card texture from strategy data
-   * Profile-focused design: Large creator avatar with minimal text overlay
+   * Protocol-native design: Modular grid, high-contrast typography
    */
   async generateCard(strategy: Strategy): Promise<string> {
     const ctx = this.ctx
@@ -90,26 +90,30 @@ export class StrategyCardGenerator {
     // Clear canvas
     ctx.clearRect(0, 0, 512, 512)
 
-    // Draw creator profile image as main visual (like album art)
-    if (strategy.creator.avatarUrl) {
+    // 1. Draw Background (Modular/Brutalist)
+    this.drawBackground(style)
+
+    // 2. Top Media Section (65% of card)
+    const mediaHeight = 330
+    ctx.save()
+    ctx.beginPath()
+    ctx.rect(0, 0, 512, mediaHeight)
+    ctx.clip()
+    
+    if (strategy.token.logoUrl) {
+      await this.drawProfileImage(strategy.token.logoUrl)
+    } else if (strategy.creator.avatarUrl) {
       await this.drawProfileImage(strategy.creator.avatarUrl)
-    } else {
-      // Fallback gradient if no avatar
-      this.drawBackground(style)
     }
+    ctx.restore()
 
-    // Subtle gradient overlay at bottom for text
-    this.drawBottomOverlay(style)
+    // 3. Status Badge (Top-Left)
+    this.drawProtocolBadge(strategy.status, style)
 
-    // Small token logo badge in corner
-    if (strategy.token.logoUrl && strategy.token.logoUrl !== strategy.creator.avatarUrl) {
-      await this.drawTokenBadge(strategy.token.logoUrl)
-    }
+    // 4. Metadata Block (Bottom 35%)
+    this.drawMetadataBlock(strategy, style, mediaHeight)
 
-    // Minimal text at bottom
-    this.drawMinimalInfo(strategy, style)
-
-    // Status indicator (border glow - will be enhanced by shader)
+    // 5. Final Border
     this.drawStatusBorder(strategy.status, style)
 
     // Return as data URL
@@ -117,348 +121,162 @@ export class StrategyCardGenerator {
   }
 
   /**
-   * Draw full-bleed profile image
+   * Draw high-contrast protocol badge
+   */
+  private drawProtocolBadge(status: StrategyStatus, style: CardStyle) {
+    const ctx = this.ctx
+    const text = status.replace('_', ' ').toUpperCase()
+    
+    // Use Monospace for protocol feel
+    ctx.font = '900 12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
+    const metrics = ctx.measureText(text)
+    const padding = 12
+    const badgeWidth = metrics.width + (padding * 2)
+    const badgeHeight = 24
+    
+    // Badge Background (Solid High Contrast)
+    ctx.fillStyle = '#000000'
+    ctx.fillRect(20, 20, badgeWidth, badgeHeight)
+    
+    // Badge Border
+    ctx.strokeStyle = style.borderColor
+    ctx.lineWidth = 1
+    ctx.strokeRect(20, 20, badgeWidth, badgeHeight)
+    
+    // Badge Text
+    ctx.fillStyle = '#ffffff'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.letterSpacing = '2px'
+    ctx.fillText(text, 20 + badgeWidth / 2, 20 + badgeHeight / 2)
+    ctx.letterSpacing = '0px'
+  }
+
+  /**
+   * Draw modular metadata section
+   */
+  private drawMetadataBlock(strategy: Strategy, style: CardStyle, yStart: number) {
+    const ctx = this.ctx
+    
+    // Section divider
+    ctx.strokeStyle = style.borderColor
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.moveTo(0, yStart)
+    ctx.lineTo(512, yStart)
+    ctx.stroke()
+
+    // Title (Bold, Uppercase, Brutalist)
+    ctx.fillStyle = '#000000'
+    ctx.font = '900 36px Arial, sans-serif'
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'top'
+    const title = strategy.title.toUpperCase()
+    const truncatedTitle = title.length > 18 ? title.substring(0, 15) + '...' : title
+    
+    // Shadow for text depth
+    ctx.fillStyle = style.borderColor
+    ctx.fillText(truncatedTitle, 26, yStart + 26)
+    ctx.fillStyle = '#000000'
+    ctx.fillText(truncatedTitle, 24, yStart + 24)
+
+    // Creator Label (Monospace)
+    ctx.font = '900 10px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
+    ctx.fillStyle = '#666666'
+    ctx.letterSpacing = '3px'
+    ctx.fillText('PROPOSED BY', 24, yStart + 75)
+    ctx.letterSpacing = '0px'
+
+    // Creator Name (Farcaster Style)
+    ctx.font = '900 20px Arial, sans-serif'
+    ctx.fillStyle = '#000000'
+    ctx.fillText(`@${strategy.creator.username.toLowerCase()}`, 24, yStart + 95)
+
+    // Stats Grid Divider
+    ctx.beginPath()
+    ctx.moveTo(320, yStart)
+    ctx.lineTo(320, 512)
+    ctx.stroke()
+
+    // Stats: Funding (Monospace label)
+    ctx.font = '900 10px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
+    ctx.fillStyle = '#666666'
+    ctx.letterSpacing = '2px'
+    ctx.fillText('FUNDING', 344, yStart + 24)
+    ctx.letterSpacing = '0px'
+    
+    ctx.font = '900 42px Arial, sans-serif'
+    ctx.fillStyle = '#000000'
+    ctx.fillText(`${strategy.fundingPercentage || 0}%`, 344, yStart + 45)
+
+    // Stats: Backers (Monospace label)
+    ctx.font = '900 10px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
+    ctx.fillStyle = '#666666'
+    ctx.letterSpacing = '2px'
+    ctx.fillText('BACKERS', 344, yStart + 95)
+    ctx.letterSpacing = '0px'
+    
+    const backers = strategy.contributorCount || 0
+    ctx.font = '900 28px Arial, sans-serif'
+    ctx.fillStyle = '#000000'
+    ctx.fillText(backers.toString().padStart(3, '0'), 344, yStart + 115)
+  }
+
+  /**
+   * Draw image to fill specific area
    */
   private async drawProfileImage(url: string) {
     try {
       const img = await this.loadImage(url)
       const ctx = this.ctx
 
-      // Draw image to fill canvas (cover behavior)
-      const scale = Math.max(512 / img.width, 512 / img.height)
-      const x = (512 - img.width * scale) / 2
-      const y = (512 - img.height * scale) / 2
+      // Cover behavior for the top section
+      const targetWidth = 512
+      const targetHeight = 330
+      const scale = Math.max(targetWidth / img.width, targetHeight / img.height)
+      const x = (targetWidth - img.width * scale) / 2
+      const y = (targetHeight - img.height * scale) / 2
 
       ctx.drawImage(img, x, y, img.width * scale, img.height * scale)
+      
+      // Desaturate slightly for protocol look
+      ctx.save()
+      ctx.globalCompositeOperation = 'saturation'
+      ctx.fillStyle = 'gray'
+      ctx.fillRect(0, 0, 512, 330)
+      ctx.restore()
     } catch (err) {
       console.warn('Failed to load profile image:', url)
-      // Draw fallback
-      const gradient = this.ctx.createLinearGradient(0, 0, 512, 512)
-      gradient.addColorStop(0, '#1e3a8a')
-      gradient.addColorStop(1, '#3b82f6')
-      this.ctx.fillStyle = gradient
-      this.ctx.fillRect(0, 0, 512, 512)
     }
   }
 
   /**
-   * Draw subtle gradient overlay at bottom for readability
+   * Draw subtle gradient background
    */
-  private drawBottomOverlay(style: CardStyle) {
-    const ctx = this.ctx
-    const gradient = ctx.createLinearGradient(0, 350, 0, 512)
-    gradient.addColorStop(0, 'rgba(0, 0, 0, 0)')
-    gradient.addColorStop(1, 'rgba(0, 0, 0, 0.85)')
-
-    ctx.fillStyle = gradient
-    ctx.fillRect(0, 350, 512, 162)
-  }
-
-  /**
-   * Draw token logo as small badge
-   */
-  private async drawTokenBadge(url: string) {
-    try {
-      const img = await this.loadImage(url)
-      const ctx = this.ctx
-
-      // Small circular badge in bottom-right
-      const size = 48
-      const x = 512 - size - 16
-      const y = 512 - size - 16
-
-      ctx.save()
-      ctx.beginPath()
-      ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2)
-      ctx.closePath()
-      ctx.clip()
-      ctx.drawImage(img, x, y, size, size)
-      ctx.restore()
-
-      // Border
-      ctx.strokeStyle = '#ffffff'
-      ctx.lineWidth = 2
-      ctx.beginPath()
-      ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2)
-      ctx.stroke()
-    } catch (err) {
-      console.warn('Failed to load token badge:', url)
-    }
-  }
-
-  /**
-   * Draw minimal info text at bottom
-   */
-  private drawMinimalInfo(strategy: Strategy, style: CardStyle) {
-    const ctx = this.ctx
-
-    // Title (truncated)
-    ctx.fillStyle = '#ffffff'
-    ctx.font = 'bold 24px Aeonik, Arial, sans-serif'
-    ctx.textAlign = 'left'
-    const title = strategy.title.length > 35 ? strategy.title.substring(0, 32) + '...' : strategy.title
-    ctx.fillText(title, 20, 460)
-
-    // Creator + Stats
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
-    ctx.font = '16px Aeonik, Arial, sans-serif'
-    ctx.fillText(`by ${strategy.creator.username}`, 20, 485)
-
-    // Quick stats
-    const stats = `💰 ${strategy.fundingPercentage}%`
-    ctx.fillText(stats, 20, 505)
-  }
-
-  /**
-   * Draw status border (subtle, shader will enhance)
-   */
-  private drawStatusBorder(status: StrategyStatus, style: CardStyle) {
-    const ctx = this.ctx
-    ctx.strokeStyle = style.borderColor
-    ctx.lineWidth = 3
-    ctx.strokeRect(1.5, 1.5, 509, 509)
-  }
-
   private drawBackground(style: CardStyle) {
     const ctx = this.ctx
+    ctx.fillStyle = '#ffffff' // Base white
+    ctx.fillRect(0, 0, 512, 512)
+    
     const gradient = ctx.createLinearGradient(0, 0, 0, 512)
-    gradient.addColorStop(0, style.bgGradient[0])
-    gradient.addColorStop(1, style.bgGradient[1])
-
+    gradient.addColorStop(0, style.bgGradient[0] + '22') // Very subtle
+    gradient.addColorStop(1, style.bgGradient[1] + '44')
+    
     ctx.fillStyle = gradient
     ctx.fillRect(0, 0, 512, 512)
   }
 
-  private drawBorder(style: CardStyle) {
+  /**
+   * Draw status border
+   */
+  private drawStatusBorder(status: StrategyStatus, style: CardStyle) {
     const ctx = this.ctx
     ctx.strokeStyle = style.borderColor
-    ctx.lineWidth = 4
-    ctx.strokeRect(2, 2, 508, 508)
+    ctx.lineWidth = 12 // Thicker, brutalist border
+    ctx.strokeRect(6, 6, 500, 500)
   }
 
-  private async drawTokenLogo(url: string) {
-    try {
-      const img = await this.loadImage(url)
-      const ctx = this.ctx
-
-      // Draw circular token logo
-      ctx.save()
-      ctx.beginPath()
-      ctx.arc(256, 100, 60, 0, Math.PI * 2)
-      ctx.closePath()
-      ctx.clip()
-      ctx.drawImage(img, 196, 40, 120, 120)
-      ctx.restore()
-
-      // Draw circle border
-      ctx.strokeStyle = '#ffffff'
-      ctx.lineWidth = 3
-      ctx.beginPath()
-      ctx.arc(256, 100, 60, 0, Math.PI * 2)
-      ctx.stroke()
-    } catch (err) {
-      console.warn('Failed to load token logo:', url)
-    }
-  }
-
-  private async drawCreatorAvatar(url: string) {
-    try {
-      const img = await this.loadImage(url)
-      const ctx = this.ctx
-
-      // Draw small circular avatar overlapping token logo
-      ctx.save()
-      ctx.beginPath()
-      ctx.arc(306, 140, 30, 0, Math.PI * 2)
-      ctx.closePath()
-      ctx.clip()
-      ctx.drawImage(img, 276, 110, 60, 60)
-      ctx.restore()
-
-      // Draw circle border
-      ctx.strokeStyle = '#ffffff'
-      ctx.lineWidth = 2
-      ctx.beginPath()
-      ctx.arc(306, 140, 30, 0, Math.PI * 2)
-      ctx.stroke()
-    } catch (err) {
-      console.warn('Failed to load creator avatar:', url)
-    }
-  }
-
-  private drawTitle(title: string, style: CardStyle) {
-    const ctx = this.ctx
-    ctx.fillStyle = style.textColor
-    ctx.font = 'bold 28px Aeonik, Arial, sans-serif'
-    ctx.textAlign = 'center'
-
-    // Wrap text if too long
-    const maxWidth = 460
-    const words = title.split(' ')
-    let line = ''
-    let y = 200
-
-    for (let i = 0; i < words.length; i++) {
-      const testLine = line + words[i] + ' '
-      const metrics = ctx.measureText(testLine)
-
-      if (metrics.width > maxWidth && i > 0) {
-        ctx.fillText(line, 256, y)
-        line = words[i] + ' '
-        y += 32
-      } else {
-        line = testLine
-      }
-    }
-    ctx.fillText(line, 256, y)
-  }
-
-  private drawCreator(username: string, style: CardStyle) {
-    const ctx = this.ctx
-    ctx.fillStyle = style.accentColor
-    ctx.font = '20px Aeonik, Arial, sans-serif'
-    ctx.textAlign = 'center'
-    ctx.fillText(`by ${username}`, 256, 270)
-  }
-
-  private drawCountdown(strategy: Strategy, style: CardStyle) {
-    const ctx = this.ctx
-    let text = ''
-    let icon = '⏱️'
-
-    if (strategy.status === StrategyStatus.ACTIVE || strategy.status === StrategyStatus.ENDING_SOON) {
-      if (strategy.daysRemaining !== undefined && strategy.daysRemaining > 0) {
-        text = `${strategy.daysRemaining}d remaining`
-      } else if (strategy.hoursRemaining !== undefined) {
-        text = `${strategy.hoursRemaining}h remaining`
-        icon = '⚠️'
-      }
-    } else if (strategy.status === StrategyStatus.COMPLETED_SUCCESS) {
-      icon = '✅'
-      text = 'Completed'
-    } else if (strategy.status === StrategyStatus.COMPLETED_FAILURE) {
-      icon = '❌'
-      text = 'Failed'
-    }
-
-    ctx.fillStyle = strategy.isEndingSoon ? '#fca5a5' : style.textColor
-    ctx.font = 'bold 24px Aeonik, Arial, sans-serif'
-    ctx.textAlign = 'center'
-    ctx.fillText(`${icon} ${text}`, 256, 310)
-  }
-
-  private drawProgressBar(strategy: Strategy, style: CardStyle) {
-    const ctx = this.ctx
-    const barWidth = 400
-    const barHeight = 20
-    const x = 56
-    const y = 330
-    const progress = strategy.fundingPercentage || 0
-
-    // Background
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'
-    ctx.fillRect(x, y, barWidth, barHeight)
-
-    // Progress fill
-    const fillWidth = (barWidth * progress) / 100
-    const gradient = ctx.createLinearGradient(x, y, x + fillWidth, y)
-    gradient.addColorStop(0, style.accentColor)
-    gradient.addColorStop(1, style.borderColor)
-    ctx.fillStyle = gradient
-    ctx.fillRect(x, y, fillWidth, barHeight)
-
-    // Border
-    ctx.strokeStyle = style.borderColor
-    ctx.lineWidth = 2
-    ctx.strokeRect(x, y, barWidth, barHeight)
-
-    // Percentage text
-    ctx.fillStyle = style.textColor
-    ctx.font = 'bold 18px Aeonik, Arial, sans-serif'
-    ctx.textAlign = 'center'
-    ctx.fillText(`${Math.round(progress)}%`, 256, y + 15)
-  }
-
-  private drawStats(strategy: Strategy, style: CardStyle) {
-    const ctx = this.ctx
-    ctx.fillStyle = style.textColor
-    ctx.font = '18px Aeonik, Arial, sans-serif'
-    ctx.textAlign = 'center'
-
-    // Funding amount
-    const fundingText = strategy.currentAmountUSD && strategy.targetAmountUSD
-      ? `💰 $${this.formatNumber(strategy.currentAmountUSD)} / $${this.formatNumber(strategy.targetAmountUSD)}`
-      : `💰 ${strategy.fundingPercentage}% funded`
-
-    ctx.fillText(fundingText, 256, 375)
-
-    // Contributors count
-    ctx.fillText(`👥 ${strategy.contributorCount} contributors`, 256, 400)
-  }
-
-  private drawMilestones(strategy: Strategy, style: CardStyle) {
-    const ctx = this.ctx
-    const completed = strategy.milestonesCompleted || 0
-    const total = strategy.milestonesTotal || 0
-
-    if (total === 0) return
-
-    const spacing = 30
-    const startX = 256 - (total * spacing) / 2
-    const y = 430
-
-    for (let i = 0; i < total; i++) {
-      const x = startX + i * spacing
-
-      // Draw circle
-      ctx.beginPath()
-      ctx.arc(x, y, 10, 0, Math.PI * 2)
-
-      if (i < completed) {
-        ctx.fillStyle = style.borderColor
-        ctx.fill()
-      } else {
-        ctx.strokeStyle = style.accentColor
-        ctx.lineWidth = 2
-        ctx.stroke()
-      }
-    }
-
-    // Milestone text
-    ctx.fillStyle = style.accentColor
-    ctx.font = '16px Aeonik, Arial, sans-serif'
-    ctx.textAlign = 'center'
-    ctx.fillText(`🎯 ${completed}/${total} milestones`, 256, 460)
-  }
-
-  private drawStatusBadges(strategy: Strategy, style: CardStyle) {
-    const ctx = this.ctx
-    const badges: string[] = []
-
-    if (strategy.trending) badges.push('🔥 TRENDING')
-    if (strategy.isEndingSoon) badges.push('⚡ ENDING SOON')
-    if (strategy.hasActiveSignals) badges.push('🛰️ SIGNALS')
-    if (strategy.creatorOptedIn) badges.push('✓ OPTED IN')
-
-    if (badges.length === 0) return
-
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'
-    ctx.font = 'bold 14px Aeonik, Arial, sans-serif'
-    ctx.textAlign = 'center'
-
-    badges.forEach((badge, i) => {
-      const y = 490 - (badges.length - 1 - i) * 20
-      ctx.fillText(badge, 256, y)
-    })
-  }
-
-  private formatNumber(num: number): string {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
-    return num.toString()
-  }
-
-  private loadImage(url: string): Promise<HTMLImageElement> {
+  private async loadImage(url: string): Promise<HTMLImageElement> {
     return new Promise((resolve, reject) => {
       const img = new Image()
       img.crossOrigin = 'anonymous'

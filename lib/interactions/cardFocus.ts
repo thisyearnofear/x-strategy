@@ -58,6 +58,9 @@ export class CardFocusManager {
       isFocused: true,
     }
 
+    // Disable gallery interactions
+    this.planes.setPaused(true)
+
     // Animate focus
     this.animateFocus(instanceId, dummy)
 
@@ -73,10 +76,19 @@ export class CardFocusManager {
   unfocusCard() {
     if (!this.focusedCard) return
 
-    const { instanceId, originalPosition, originalRotation, originalScale } = this.focusedCard
+    const { instanceId, originalPosition, originalRotation, originalScale } =
+      this.focusedCard
+
+    // Re-enable gallery interactions
+    this.planes.setPaused(false)
 
     // Animate back to original state
-    this.animateUnfocus(instanceId, originalPosition, originalRotation, originalScale)
+    this.animateUnfocus(
+      instanceId,
+      originalPosition,
+      originalRotation,
+      originalScale
+    )
 
     this.focusedCard = null
 
@@ -92,53 +104,30 @@ export class CardFocusManager {
   private animateFocus(instanceId: number, dummy: THREE.Object3D) {
     const timeline = gsap.timeline()
 
-    // Step 1: Fade other cards (0-200ms)
+    // Step 1: Fade other cards
     timeline.to(this, {
-      otherCardsOpacity: 0.3,
-      duration: 0.2,
+      otherCardsOpacity: 0.15, // Deeper dimming
+      duration: 0.4,
       ease: 'power2.out',
       onUpdate: () => {
         this.updateOtherCardsOpacity(instanceId)
       },
     })
 
-    // Step 2: Move camera closer to card (200-600ms)
-    const targetCameraZ = this.camera.position.z + 10
-    timeline.to(
-      this.camera.position,
-      {
-        z: targetCameraZ,
-        duration: 0.4,
-        ease: 'power2.inOut',
-      },
-      '<0.1' // Start slightly after fade
-    )
+    // Step 2: Scale up and move to "Hero Position" (left-center)
+    const targetScale = 2.5 // Larger focus
+    const heroX = -this.planes.sizes.width * 0.2 // 20% to the left
+    const heroY = 0
+    const heroZ = dummy.position.z + 8 // Bring forward significantly
 
-    // Step 3: Scale up card (300-700ms)
-    const targetScale = dummy.scale.x * 2.0
     timeline.to(
       dummy.scale,
       {
         x: targetScale,
         y: targetScale,
         z: targetScale,
-        duration: 0.4,
-        ease: 'back.out(1.2)',
-        onUpdate: () => {
-          this.updateCardMatrix(instanceId, dummy)
-        },
-      },
-      '<0.1'
-    )
-
-    // Step 4: Move card forward in Z (to prevent clipping)
-    const targetZ = dummy.position.z + 5
-    timeline.to(
-      dummy.position,
-      {
-        z: targetZ,
-        duration: 0.3,
-        ease: 'power2.out',
+        duration: 0.8,
+        ease: 'power3.inOut',
         onUpdate: () => {
           this.updateCardMatrix(instanceId, dummy)
         },
@@ -146,16 +135,28 @@ export class CardFocusManager {
       '<'
     )
 
-    // Step 5: Center card in view (if not already centered)
-    const targetX = 0
-    const targetY = 0
     timeline.to(
       dummy.position,
       {
-        x: targetX,
-        y: targetY,
-        duration: 0.4,
-        ease: 'power2.inOut',
+        x: heroX,
+        y: heroY,
+        z: heroZ,
+        duration: 0.8,
+        ease: 'power3.inOut',
+        onUpdate: () => {
+          this.updateCardMatrix(instanceId, dummy)
+        },
+      },
+      '<'
+    )
+
+    // Step 3: Subtle rotation for depth
+    timeline.to(
+      dummy.rotation,
+      {
+        y: 0.15, // Slight tilt towards the UI
+        duration: 0.8,
+        ease: 'power3.inOut',
         onUpdate: () => {
           this.updateCardMatrix(instanceId, dummy)
         },
@@ -179,15 +180,15 @@ export class CardFocusManager {
 
     const timeline = gsap.timeline()
 
-    // Reverse the focus animation
+    // Step 1: Restore position and scale
     timeline.to(
       dummy.position,
       {
         x: originalPosition.x,
         y: originalPosition.y,
         z: originalPosition.z,
-        duration: 0.3,
-        ease: 'power2.inOut',
+        duration: 0.6,
+        ease: 'power3.inOut',
         onUpdate: () => {
           this.updateCardMatrix(instanceId, dummy)
         },
@@ -200,8 +201,8 @@ export class CardFocusManager {
         x: originalScale,
         y: originalScale,
         z: originalScale,
-        duration: 0.3,
-        ease: 'power2.inOut',
+        duration: 0.6,
+        ease: 'power3.inOut',
         onUpdate: () => {
           this.updateCardMatrix(instanceId, dummy)
         },
@@ -209,27 +210,32 @@ export class CardFocusManager {
       '<'
     )
 
+    // Step 2: Restore rotation
     timeline.to(
-      this.camera.position,
+      dummy.rotation,
       {
-        z: this.camera.position.z - 10,
-        duration: 0.3,
-        ease: 'power2.inOut',
+        y: originalRotation.y,
+        duration: 0.6,
+        ease: 'power3.inOut',
+        onUpdate: () => {
+          this.updateCardMatrix(instanceId, dummy)
+        },
       },
       '<'
     )
 
+    // Step 3: Fade in other cards
     timeline.to(
       this,
       {
         otherCardsOpacity: 1.0,
-        duration: 0.2,
-        ease: 'power2.out',
+        duration: 0.4,
+        ease: 'power2.inOut',
         onUpdate: () => {
           this.updateOtherCardsOpacity(instanceId)
         },
       },
-      '<0.1'
+      '-=0.2'
     )
   }
 

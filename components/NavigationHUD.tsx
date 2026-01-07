@@ -36,9 +36,39 @@ export default function NavigationHUD({
     if (!dismissed) setShowExplainer(true);
   }, []);
 
+  const [onboardingStep, setOnboardingStep] = useState(0);
+  const onboardingContent = [
+    {
+      title: "Outcome-Backed Coordination",
+      description:
+        "X-Strategy transforms tokens from speculative assets into instruments for verifiable outcomes. No more empty hype.",
+      icon: "🎯",
+    },
+    {
+      title: "Verifiable Milestones",
+      description:
+        "Contributors back outcomes. Capital is only unlocked when milestones are verified on-chain, ensuring accountability.",
+      icon: "⚖️",
+    },
+    {
+      title: "Automated Protections",
+      description:
+        "Built-in auto-unwind and slippage limits protect your downside if coordination goals aren't met.",
+      icon: "🛡️",
+    },
+  ];
+
   const dismissExplainer = () => {
     window.localStorage.setItem("xstrategy_explainer_dismissed", "1");
     setShowExplainer(false);
+  };
+
+  const nextOnboarding = () => {
+    if (onboardingStep < onboardingContent.length - 1) {
+      setOnboardingStep((s) => s + 1);
+    } else {
+      dismissExplainer();
+    }
   };
 
   if (!mounted) return null;
@@ -168,90 +198,54 @@ export default function NavigationHUD({
         <span>Create Strategy</span>
       </button>
 
-      {/* Explainer */}
+      {/* Onboarding Explainer */}
       {showExplainer && (
-        <div className="fixed inset-0 z-40 pointer-events-auto">
-          <div
-            className="absolute inset-0 bg-black/40 dark:bg-black/75 backdrop-blur-sm"
-            onClick={dismissExplainer}
-          />
-          <div className="absolute inset-x-0 top-20 px-6">
-            <div className="max-w-3xl mx-auto bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-3xl shadow-2xl overflow-hidden">
-              <div className="p-6 md:p-8">
-                <div className="flex items-start justify-between gap-6">
-                  <div>
-                    <div className="text-sm text-blue-600 dark:text-blue-300 font-semibold mb-2">
-                      Outcome-backed capital coordination
-                    </div>
-                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white leading-tight">
-                      Incentivize specific actions with creator/app coins, then
-                      share the upside if it works.
-                    </h2>
-                    <p className="text-gray-600 dark:text-gray-300 mt-3 leading-relaxed">
-                      Each card is a strategy: a measurable outcome, split into
-                      milestones, with automated protection for contributors.
-                    </p>
-                  </div>
-                  <button
-                    onClick={dismissExplainer}
-                    className="text-gray-400 hover:text-gray-900 dark:hover:text-white text-3xl leading-none transition-colors"
-                    aria-label="Close"
-                  >
-                    ×
-                  </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/40 backdrop-blur-md transition-all">
+          <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-800 w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center text-2xl">
+                  {onboardingContent[onboardingStep].icon}
                 </div>
-
-                <div className="grid md:grid-cols-3 gap-4 mt-6">
-                  <div className="bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-700 rounded-2xl p-4">
-                    <div className="text-gray-900 dark:text-white font-bold mb-1">
-                      1) Back an outcome
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-300">
-                      Contribute to fund token buys behind a concrete objective.
-                    </div>
-                  </div>
-                  <div className="bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-700 rounded-2xl p-4">
-                    <div className="text-gray-900 dark:text-white font-bold mb-1">
-                      2) Milestones unlock
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-300">
-                      As milestones are verified, value unlocks to early
-                      believers.
-                    </div>
-                  </div>
-                  <div className="bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-700 rounded-2xl p-4">
-                    <div className="text-gray-900 dark:text-white font-bold mb-1">
-                      3) Downside protection
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-300">
-                      Auto-unwind, slippage limits, and liquidity checks reduce
-                      risk.
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3 mt-6">
-                  <button
-                    onClick={() => {
-                      dismissExplainer();
-                      onCreateStrategy?.();
-                    }}
-                    className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 rounded-xl transition-all transform hover:scale-[1.02] shadow-lg"
-                  >
-                    Create a strategy
-                  </button>
-                  <button
-                    onClick={dismissExplainer}
-                    className="flex-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-semibold py-3 rounded-xl border border-gray-200 dark:border-gray-600 transition-colors"
-                  >
-                    Explore the gallery
-                  </button>
-                </div>
-
-                <div className="text-xs text-gray-400 mt-4">
-                  Upside is not guaranteed; outcomes can fail.
+                <div className="flex gap-1">
+                  {onboardingContent.map((_, i) => (
+                    <div
+                      key={i}
+                      className={`h-1 rounded-full transition-all duration-300 ${
+                        i === onboardingStep
+                          ? "w-4 bg-blue-500"
+                          : "w-1 bg-gray-200 dark:bg-gray-700"
+                      }`}
+                    />
+                  ))}
                 </div>
               </div>
+
+              <h3 className="text-xl font-black text-gray-900 dark:text-white mb-3 tracking-tight">
+                {onboardingContent[onboardingStep].title}
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-sm">
+                {onboardingContent[onboardingStep].description}
+              </p>
+            </div>
+
+            <div className="p-6 bg-gray-50 dark:bg-gray-800/50 flex gap-3">
+              {onboardingStep > 0 && (
+                <button
+                  onClick={() => setOnboardingStep((s) => s - 1)}
+                  className="flex-1 py-3 text-sm font-bold text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                >
+                  Back
+                </button>
+              )}
+              <button
+                onClick={nextOnboarding}
+                className="flex-[2] bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold py-3 rounded-xl shadow-lg shadow-blue-500/20 transition-all transform active:scale-95"
+              >
+                {onboardingStep === onboardingContent.length - 1
+                  ? "Start Exploring"
+                  : "Next Step"}
+              </button>
             </div>
           </div>
         </div>

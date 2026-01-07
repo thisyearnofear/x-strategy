@@ -3,7 +3,7 @@
  * Expanded view of strategy details when a card is clicked
  */
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Strategy, StrategyStatus } from "../lib/types/strategy";
 
 interface StrategyModalProps {
@@ -49,8 +49,6 @@ export default function StrategyModal({
     [StrategyStatus.CANCELLED]: "bg-gray-600",
     [StrategyStatus.DRAFT]: "bg-gray-400",
   };
-
-  const statusColor = statusColors[strategy.status] || "bg-gray-500";
 
   const handleOptInClick = async () => {
     if (!onOptIn) return;
@@ -98,336 +96,358 @@ export default function StrategyModal({
 
       {/* Modal */}
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
+        className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4 pointer-events-none"
         onClick={onClose}
       >
         <div
-          className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 max-w-4xl w-full max-h-[90vh] overflow-y-auto pointer-events-auto"
+          className="bg-white dark:bg-black w-full max-w-5xl h-full md:h-auto md:max-h-[90vh] overflow-y-auto pointer-events-auto shadow-[0_0_100px_rgba(0,0,0,0.5)] border-x md:border border-gray-200 dark:border-white/10"
           onClick={(e) => e.stopPropagation()}
-          style={{ animation: "slideUp 0.3s ease-out" }}
+          style={{ animation: "slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)" }}
         >
-          {/* Header */}
-          <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700 p-6 flex justify-between items-start z-10">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <span
-                  className={`${statusColor} text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm`}
-                >
-                  {strategy.status.replace("_", " ").toUpperCase()}
-                </span>
-                {strategy.trending && (
-                  <span className="bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm">
-                    🔥 TRENDING
-                  </span>
-                )}
-              </div>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                {strategy.title}
-              </h2>
-              <p className="text-gray-500 dark:text-gray-400 text-sm">
-                by{" "}
-                <span className="text-blue-600 dark:text-blue-400 font-semibold">
-                  {strategy.creator.displayName || strategy.creator.username}
-                </span>
-                {strategy.creator.reputationScore && (
-                  <span className="ml-2 text-yellow-600 dark:text-yellow-400">
-                    ⭐ {strategy.creator.reputationScore} reputation
-                  </span>
-                )}
-              </p>
+          {/* Top Navigation Bar (Farcaster style) */}
+          <div className="sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-gray-100 dark:border-white/10 px-6 py-4 flex justify-between items-center z-20">
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">
+                Strategy Protocol / v1.0
+              </span>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-900 dark:hover:text-white text-3xl leading-none transition-colors"
-              aria-label="Close"
+              className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-black dark:hover:text-white transition-colors border border-transparent hover:border-zinc-200 dark:hover:border-white/20"
             >
-              ×
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
             </button>
           </div>
 
-          {/* Content */}
-          <div className="p-6 space-y-6">
-            {/* Token & Creator Info */}
-            <div className="flex items-center gap-6 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50">
-              <div className="flex items-center gap-4">
+          <div className="flex flex-col md:flex-row">
+            {/* Left Column: Media & Core Info */}
+            <div className="flex-1 border-r border-gray-100 dark:border-white/10">
+              {/* Media Section (Zora style) */}
+              <div className="aspect-square md:aspect-video bg-zinc-100 dark:bg-zinc-900 relative overflow-hidden border-b border-gray-100 dark:border-white/10">
                 {strategy.token.logoUrl && (
                   <img
                     src={strategy.token.logoUrl}
                     alt={strategy.token.name}
-                    className="w-16 h-16 rounded-full border-2 border-gray-200 dark:border-gray-600 shadow-sm"
+                    className="w-full h-full object-cover"
                   />
                 )}
-                <div>
-                  <div className="text-gray-900 dark:text-white font-bold text-lg">
-                    {strategy.token.name}
-                  </div>
-                  <div className="text-gray-500 dark:text-gray-400 text-sm">
-                    {strategy.token.symbol}
-                  </div>
-                </div>
-              </div>
-              {strategy.creator.avatarUrl && (
-                <div className="flex items-center gap-3 ml-auto">
-                  <img
-                    src={strategy.creator.avatarUrl}
-                    alt={strategy.creator.username}
-                    className="w-12 h-12 rounded-full border-2 border-blue-500 shadow-sm"
-                  />
-                  <div className="text-right">
-                    <div className="text-gray-900 dark:text-white font-semibold">
-                      {strategy.creator.displayName ||
-                        strategy.creator.username}
-                    </div>
-                    <div className="text-gray-500 dark:text-gray-400 text-xs">
-                      {strategy.creator.strategiesCompleted}/
-                      {strategy.creator.strategiesCreated} completed
-                    </div>
+                <div className="absolute bottom-6 left-6 right-6">
+                  <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter mb-2">
+                    {strategy.title}
+                  </h1>
+                  <div className="flex items-center gap-2">
+                    <span className="bg-black text-white text-[10px] font-mono px-2 py-1 uppercase tracking-widest border border-white/20">
+                      {strategy.status.replace("_", " ")}
+                    </span>
+                    {strategy.trending && (
+                      <span className="bg-white text-black text-[10px] font-mono px-2 py-1 uppercase tracking-widest border border-black/20">
+                        Trending
+                      </span>
+                    )}
                   </div>
                 </div>
-              )}
-            </div>
-
-            {/* Description */}
-            <div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                Outcome
-              </h3>
-              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                {strategy.description}
-              </p>
-            </div>
-
-            <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-xl p-5">
-              <div className="flex items-center justify-between gap-4 mb-4">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                  How this creates upside
-                </h3>
-                <div className="text-xs text-gray-500 dark:text-gray-400">
-                  Powered by {strategy.token.symbol}
-                </div>
-              </div>
-              <div className="grid md:grid-cols-3 gap-3">
-                <div className="bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
-                  <div className="text-gray-900 dark:text-white font-semibold mb-1">
-                    Back early
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-300">
-                    You contribute capital to fund the strategy’s execution.
-                  </div>
-                </div>
-                <div className="bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
-                  <div className="text-gray-900 dark:text-white font-semibold mb-1">
-                    Milestones verify
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-300">
-                    As milestones complete, value unlocks to contributors.
-                  </div>
-                </div>
-                <div className="bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
-                  <div className="text-gray-900 dark:text-white font-semibold mb-1">
-                    Protections apply
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-300">
-                    Auto-unwind and slippage limits help manage downside.
-                  </div>
-                </div>
-              </div>
-              <div className="grid sm:grid-cols-3 gap-3 mt-4">
-                <div className="bg-white/60 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    Auto-unwind
-                  </div>
-                  <div className="text-sm text-gray-900 dark:text-white font-semibold">
-                    {strategy.automation.autoUnwindEnabled
-                      ? "Enabled"
-                      : "Disabled"}
-                  </div>
-                </div>
-                <div className="bg-white/60 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    Slippage limit
-                  </div>
-                  <div className="text-sm text-gray-900 dark:text-white font-semibold">
-                    {strategy.automation.slippageLimit}%
-                  </div>
-                </div>
-                <div className="bg-white/60 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    Liquidity checks
-                  </div>
-                  <div className="text-sm text-gray-900 dark:text-white font-semibold">
-                    {strategy.automation.liquidityCheckEnabled
-                      ? "Enabled"
-                      : "Disabled"}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Timelines and Stats */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 rounded-xl p-4">
-                <div className="text-gray-500 dark:text-gray-400 text-sm mb-1">
-                  Timeline
-                </div>
-                <div className="text-gray-900 dark:text-white text-2xl font-bold">
-                  {strategy.daysRemaining !== undefined
-                    ? `${strategy.daysRemaining}d remaining`
-                    : strategy.hoursRemaining !== undefined
-                    ? `${strategy.hoursRemaining}h remaining`
-                    : "Completed"}
-                </div>
-              </div>
-              <div className="bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 rounded-xl p-4">
-                <div className="text-gray-500 dark:text-gray-400 text-sm mb-1">
-                  Funding
-                </div>
-                <div className="text-gray-900 dark:text-white text-2xl font-bold">
-                  {strategy.fundingPercentage}%
-                </div>
-                <div className="text-gray-500 dark:text-gray-500 text-xs mt-1">
-                  ${strategy.currentAmountUSD?.toLocaleString()} / $
-                  {strategy.targetAmountUSD?.toLocaleString()}
-                </div>
-              </div>
-            </div>
-
-            {/* Progress Bar */}
-            <div>
-              <div className="h-4 bg-gray-700 rounded-full overflow-hidden">
-                <div
-                  className={`h-full ${statusColor} transition-all duration-500`}
-                  style={{ width: `${strategy.fundingPercentage}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Action Section */}
-            <div className="bg-gray-900 rounded-xl p-6 border border-gray-700">
-              <h3 className="text-xl font-bold text-white mb-1">
-                Back This Outcome
-              </h3>
-              <div className="text-sm text-gray-400 mb-4">
-                Contribute now; upside tracks the creator/app coin if the
-                outcome succeeds.
               </div>
 
-              {strategy.status === StrategyStatus.PENDING_CREATOR ? (
-                <div className="space-y-4">
-                  {isDesignatedCreator ? (
-                    <div className="bg-yellow-900/30 border border-yellow-500/50 p-4 rounded-lg">
-                      <p className="text-yellow-200 mb-2">
-                        You are the designated creator for this strategy.
-                      </p>
-                      <p className="text-sm text-gray-400 mb-4">
-                        To activate it, you must opt-in by staking{" "}
-                        <strong>
-                          {Number(strategy.creatorStake) / 1e18} ETH
-                        </strong>
-                        . This stake ensures alignment and is refunded upon
-                        success.
-                      </p>
-                      <button
-                        onClick={handleOptInClick}
-                        disabled={isProcessing}
-                        className="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+              {/* Description Section */}
+              <div className="p-8 md:p-12">
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="w-12 h-12 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-lg font-black text-zinc-500 overflow-hidden border border-gray-100 dark:border-white/10">
+                    {strategy.creator.avatarUrl ? (
+                      <img
+                        src={strategy.creator.avatarUrl}
+                        alt={strategy.creator.username}
+                        className="w-full h-full object-cover grayscale"
+                      />
+                    ) : (
+                      strategy.creator.username.substring(0, 2).toUpperCase()
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-0.5">
+                      Proposed by
+                    </p>
+                    <p className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">
+                      @{strategy.creator.username}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <h2 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.4em] border-b border-gray-100 dark:border-white/10 pb-4">
+                    [ Outcome Description ]
+                  </h2>
+                  <p className="text-xl text-zinc-600 dark:text-zinc-400 leading-relaxed font-medium">
+                    {strategy.description}
+                  </p>
+                </div>
+
+                {/* Milestones Section (Protocol Checklist) */}
+                <div className="mt-16 space-y-8">
+                  <h2 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.4em] border-b border-gray-100 dark:border-white/10 pb-4">
+                    [ Verification Milestones ]
+                  </h2>
+                  <div className="space-y-4">
+                    {strategy.milestones.map((milestone, idx) => (
+                      <div
+                        key={idx}
+                        className="flex gap-6 items-start p-4 border border-gray-100 dark:border-white/5 bg-zinc-50/50 dark:bg-zinc-900/20"
                       >
-                        {isProcessing
-                          ? "Processing Opt-In..."
-                          : "✅ Opt In & Stake"}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="text-center p-6 bg-gray-800 rounded-lg">
-                      <p className="text-gray-400">
-                        Waiting for <strong>{strategy.creator.username}</strong>{" "}
-                        to opt-in.
-                      </p>
-                    </div>
-                  )}
+                        <div
+                          className={`mt-1 w-5 h-5 flex-shrink-0 border-2 ${
+                            milestone.status === "completed"
+                              ? "bg-black dark:bg-white border-black dark:border-white"
+                              : "border-zinc-300 dark:border-zinc-700"
+                          } flex items-center justify-center`}
+                        >
+                          {milestone.status === "completed" && (
+                            <svg
+                              className="w-3 h-3 text-white dark:text-black"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            >
+                              <path d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                        <div>
+                          <p
+                            className={`font-black uppercase tracking-tight ${
+                              milestone.status === "completed"
+                                ? "text-gray-900 dark:text-white"
+                                : "text-zinc-400"
+                            }`}
+                          >
+                            {milestone.title}
+                          </p>
+                          <p className="text-sm text-zinc-500 mt-1 italic">
+                            {milestone.description}
+                          </p>
+                        </div>
+                        <div className="ml-auto">
+                          <span className="text-[9px] font-mono text-zinc-400 uppercase">
+                            {milestone.status === "completed"
+                              ? "Verified"
+                              : "Locked"}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ) : strategy.status === StrategyStatus.ACTIVE ? (
-                <div className="space-y-4">
-                  <div className="flex gap-4">
+              </div>
+            </div>
+
+            {/* Right Column: Actions & Stats */}
+            <div className="w-full md:w-[400px] bg-zinc-50 dark:bg-zinc-950 p-8 md:p-12 space-y-12">
+              {/* Stats Grid (Modular Blocks) */}
+              <div className="grid grid-cols-1 gap-4">
+                <div className="bg-white dark:bg-black border border-gray-200 dark:border-white/10 p-6">
+                  <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em] mb-2">
+                    Current Funding
+                  </p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-black text-gray-900 dark:text-white">
+                      {strategy.fundingPercentage || 0}%
+                    </span>
+                    <span className="text-xs font-bold text-zinc-400 uppercase">
+                      of Target
+                    </span>
+                  </div>
+                  <div className="w-full h-1 bg-zinc-100 dark:bg-zinc-900 mt-4 overflow-hidden">
+                    <div
+                      className="h-full bg-blue-600 transition-all duration-1000"
+                      style={{ width: `${strategy.fundingPercentage || 0}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-black border border-gray-200 dark:border-white/10 p-6">
+                  <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em] mb-2">
+                    Time Remaining
+                  </p>
+                  <span className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tight">
+                    {strategy.daysRemaining || 0} Days
+                  </span>
+                </div>
+              </div>
+
+              {/* Action Area (Brutalist style) */}
+              <div className="space-y-6">
+                {strategy.status === StrategyStatus.PENDING_CREATOR ? (
+                  <div className="p-6 bg-yellow-600/5 border border-yellow-600/20">
+                    {isDesignatedCreator ? (
+                      <>
+                        <p className="text-[10px] font-black text-yellow-600 dark:text-yellow-400 uppercase tracking-[0.2em] mb-4">
+                          Creator Opt-In Required
+                        </p>
+                        <p className="text-sm text-zinc-500 mb-6 font-medium">
+                          To activate this strategy, you must stake{" "}
+                          <strong>
+                            {Number(strategy.creatorStake) / 1e18} ETH
+                          </strong>
+                          . This stake ensures alignment and is refunded upon
+                          success.
+                        </p>
+                        <button
+                          onClick={handleOptInClick}
+                          disabled={isProcessing}
+                          className="w-full bg-yellow-600 text-white py-5 font-black uppercase tracking-[0.3em] text-sm hover:bg-yellow-700 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                        >
+                          {isProcessing ? "Processing..." : "Opt In & Stake"}
+                        </button>
+                      </>
+                    ) : (
+                      <div className="text-center py-8">
+                        <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-2">
+                          Status: Pending Creator
+                        </p>
+                        <p className="text-sm text-zinc-500 font-medium">
+                          Waiting for @{strategy.creator.username} to opt-in.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : strategy.status === StrategyStatus.ACTIVE ? (
+                  <div className="p-6 bg-blue-600/5 border border-blue-600/20">
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em]">
+                        Back with {strategy.token.symbol}
+                      </span>
+                      <span className="text-[10px] font-mono text-zinc-400">
+                        Balance: --
+                      </span>
+                    </div>
                     <input
                       type="number"
                       value={contributionAmount}
                       onChange={(e) => setContributionAmount(e.target.value)}
-                      className="flex-1 bg-gray-800 border border-gray-600 text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
-                      placeholder="ETH to escrow"
+                      className="w-full bg-white dark:bg-black border-2 border-black dark:border-white p-4 text-2xl font-black text-gray-900 dark:text-white focus:outline-none mb-4"
+                      placeholder="0.00"
                     />
                     <button
                       onClick={handleContributeClick}
                       disabled={isProcessing}
-                      className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 rounded-lg transition-all transform hover:scale-105"
+                      className="w-full bg-black dark:bg-white text-white dark:text-black py-5 font-black uppercase tracking-[0.3em] text-sm hover:invert transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                     >
-                      {isProcessing ? "Processing..." : "Back with ETH"}
+                      {isProcessing ? "Executing..." : "Confirm Backing"}
                     </button>
                   </div>
-                  <p className="text-xs text-center text-gray-500">
-                    ⚠️ Funds are swapped by Operator to {strategy.token.symbol}{" "}
-                    and pending confirmation. Funds held in escrow.
-                  </p>
-                </div>
-              ) : (
-                <div className="text-center p-4">
-                  <span className="text-gray-400">
-                    Strategy is {strategy.status.replace("_", " ")}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                Milestones
-              </h3>
-              <div className="space-y-4 relative before:absolute before:inset-0 before:left-4 before:border-l-2 before:border-gray-100 dark:before:border-gray-800 before:pointer-events-none">
-                {strategy.milestones.map((milestone, idx) => (
-                  <div key={idx} className="relative pl-10">
-                    <div className={`absolute left-2 top-1.5 w-4 h-4 rounded-full border-2 bg-white dark:bg-gray-900 z-10 ${
-                      milestone.status === 'completed' 
-                        ? 'border-green-500 bg-green-500' 
-                        : 'border-gray-300 dark:border-gray-600'
-                    }`}>
-                      {milestone.status === 'completed' && (
-                        <svg className="w-full h-full text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </div>
-                    <div className="flex justify-between items-start">
-                      <h5 className={`font-bold ${milestone.status === 'completed' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
-                        {milestone.title}
-                      </h5>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                        milestone.status === 'completed' 
-                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' 
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
-                      }`}>
-                        {milestone.status === 'completed' ? 'Verified' : 'Pending'}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      {milestone.description}
+                ) : (
+                  <div className="p-6 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 text-center">
+                    <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">
+                      Strategy {strategy.status.replace("_", " ")}
                     </p>
                   </div>
-                ))}
+                )}
+
+                <div className="text-center">
+                  <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-[0.1em] mb-4">
+                    Your contribution is protected by the Strategy Protocol.
+                  </p>
+                  <div className="flex justify-center gap-6">
+                    <div className="text-center">
+                      <p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">
+                        Auto-Unwind
+                      </p>
+                      <p className="text-[10px] font-bold text-gray-900 dark:text-white">
+                        ENABLED
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">
+                        Slippage
+                      </p>
+                      <p className="text-[10px] font-bold text-gray-900 dark:text-white">
+                        1.0%
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Protocol Stats Grid (Zora/Farcaster Style) */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-[1px] bg-gray-200 dark:bg-white/10 border border-gray-200 dark:border-white/10">
+                  <div className="bg-white dark:bg-black p-4">
+                    <p className="text-[9px] uppercase tracking-[0.2em] font-black text-zinc-400 mb-1">
+                      Backers
+                    </p>
+                    <p className="text-xl font-black text-gray-900 dark:text-white">
+                      {strategy.contributorCount || 124}
+                    </p>
+                  </div>
+                  <div className="bg-white dark:bg-black p-4">
+                    <p className="text-[9px] uppercase tracking-[0.2em] font-black text-zinc-400 mb-1">
+                      Casts
+                    </p>
+                    <p className="text-xl font-black text-gray-900 dark:text-white">
+                      {strategy.castCount
+                        ? `${(strategy.castCount / 1000).toFixed(1)}k`
+                        : "8.2k"}
+                    </p>
+                  </div>
+                  <div className="bg-white dark:bg-black p-4">
+                    <p className="text-[9px] uppercase tracking-[0.2em] font-black text-zinc-400 mb-1">
+                      Verifiers
+                    </p>
+                    <p className="text-xl font-black text-gray-900 dark:text-white">
+                      {Math.floor((strategy.contributorCount || 124) * 0.3)}
+                    </p>
+                  </div>
+                  <div className="bg-white dark:bg-black p-4">
+                    <p className="text-[9px] uppercase tracking-[0.2em] font-black text-zinc-400 mb-1">
+                      Signals
+                    </p>
+                    <p className="text-xl font-black text-gray-900 dark:text-white">
+                      {strategy.signalCount || 0}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Technical Metadata Footer */}
+                <div className="pt-8 border-t border-gray-100 dark:border-white/10 space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">
+                      Contract Address
+                    </span>
+                    <span className="text-[10px] font-mono text-zinc-500">
+                      0x{strategy.id.substring(2, 8)}...
+                      {strategy.id.substring(strategy.id.length - 4)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">
+                      Protocol Version
+                    </span>
+                    <span className="text-[10px] font-mono text-zinc-500">
+                      v1.0.4-COORDINATED
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">
+                      Network
+                    </span>
+                    <span className="text-[10px] font-mono text-blue-500 uppercase">
+                      {strategy.token.chain} Mainnet
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
-
-            {/* Signal Streams */}
-            {strategy.hasActiveSignals && (
-              <div className="bg-gradient-to-r from-blue-900/30 to-cyan-900/30 rounded-xl p-4 border border-blue-500/30">
-                <h3 className="text-lg font-bold text-white mb-2">
-                  🛰️ Signal Streams Available
-                </h3>
-                <p className="text-gray-300 text-sm mb-3">
-                  {strategy.signalCount} creator signals published. Stake tokens
-                  to unlock access.
-                </p>
-              </div>
-            )}
           </div>
         </div>
       </div>

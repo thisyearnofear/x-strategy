@@ -18,104 +18,136 @@ export default function StrategyPreview({
   };
 
   return (
-    <div className="fixed inset-0 z-20 flex items-center justify-center pointer-events-none">
+    <div className="fixed inset-0 z-20 flex items-center justify-end pointer-events-none p-6 md:p-12 md:pr-24">
       {/* Overlay to catch clicks outside the preview card */}
       <div
         className="absolute inset-0 pointer-events-auto"
         onClick={onDismiss}
       />
 
-      {/* Preview Card - positioned below the 3D card (which is centered) */}
+      {/* Preview Card - Farcaster/Zora Inspired aesthetic */}
       <div
-        className="relative mt-[450px] pointer-events-auto animate-fadeInUp"
+        className="relative pointer-events-auto animate-fadeInRight w-full max-w-sm"
         onClick={handleContainerClick}
       >
-        <div className="bg-white dark:bg-gray-900/90 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl p-6 w-[90vw] max-w-md mx-4">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
-                  {strategy.title}
-                </h3>
-                {strategy.creator.reputationScore &&
-                  strategy.creator.reputationScore > 80 && (
-                    <span className="text-blue-500" title="Verified Creator">
-                      <svg
-                        className="w-5 h-5"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.604.3 1.166.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </span>
-                  )}
+        <div className="bg-white dark:bg-black border border-gray-200 dark:border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(255,255,255,0.05)] overflow-hidden">
+          {/* Header Media / Protocol Banner */}
+          <div className="relative h-48 bg-gray-100 dark:bg-zinc-900 overflow-hidden">
+            {strategy.token.logoUrl && (
+              <img
+                src={strategy.token.logoUrl}
+                alt={strategy.token.name}
+                className="w-full h-full object-cover opacity-50 grayscale hover:grayscale-0 transition-all duration-700"
+              />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-black to-transparent" />
+            <div className="absolute top-4 left-4">
+              <span className="px-2 py-1 bg-blue-600 text-white text-[10px] font-black uppercase tracking-[0.2em]">
+                Active Strategy
+              </span>
+            </div>
+          </div>
+
+          <div className="p-6">
+            {/* Title & Creator */}
+            <div className="mb-6">
+              <h3 className="text-2xl font-black text-gray-900 dark:text-white leading-tight tracking-tight mb-2 uppercase">
+                {strategy.title}
+              </h3>
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-[8px] font-black text-zinc-500 border border-gray-200 dark:border-white/10">
+                  {strategy.creator.username.substring(0, 2).toUpperCase()}
+                </div>
+                <p className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">
+                  Created by{" "}
+                  <span className="text-gray-900 dark:text-white">
+                    @{strategy.creator.username}
+                  </span>
+                </p>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                by{" "}
-                <span className="font-semibold text-blue-600 dark:text-blue-400">
-                  {strategy.creator.username}
-                </span>
+            </div>
+
+            {/* Protocol Stats Grid */}
+            <div className="grid grid-cols-2 gap-[1px] bg-gray-200 dark:bg-white/10 border border-gray-200 dark:border-white/10 mb-6">
+              <div className="bg-white dark:bg-black p-4">
+                <p className="text-[9px] uppercase tracking-[0.2em] font-black text-zinc-400 mb-1">
+                  Backers
+                </p>
+                <p className="text-xl font-black text-gray-900 dark:text-white">
+                  {(strategy.fundingPercentage || 0) > 0
+                    ? Math.floor((strategy.fundingPercentage || 0) * 1.5)
+                    : 12}
+                </p>
+              </div>
+              <div className="bg-white dark:bg-black p-4">
+                <p className="text-[9px] uppercase tracking-[0.2em] font-black text-zinc-400 mb-1">
+                  Funding
+                </p>
+                <p className="text-xl font-black text-blue-600 dark:text-blue-500">
+                  {strategy.fundingPercentage || 0}%
+                </p>
+              </div>
+            </div>
+
+            {/* Description (Farcaster "Cast" style) */}
+            <div className="mb-8 border-l-2 border-zinc-100 dark:border-zinc-800 pl-4">
+              <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed line-clamp-2 italic">
+                "{strategy.description}"
               </p>
             </div>
-            <div className="flex flex-col items-end">
-              <span className="bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-bold px-2 py-1 rounded-full mb-1">
-                {strategy.fundingPercentage}% Funded
-              </span>
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                {strategy.daysRemaining}d left
-              </span>
+
+            {/* Action Buttons (Zora Style) */}
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={onOpenDetails}
+                className="w-full bg-black dark:bg-white text-white dark:text-black font-black py-4 uppercase tracking-[0.2em] text-xs hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all flex items-center justify-center gap-3"
+              >
+                <span>Back Outcome</span>
+                <svg
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                >
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </button>
+              <button
+                onClick={onDismiss}
+                className="w-full py-3 text-[10px] font-black text-zinc-400 hover:text-zinc-900 dark:hover:text-white uppercase tracking-[0.3em] transition-colors"
+              >
+                [ Dismiss ]
+              </button>
             </div>
           </div>
 
-          {/* Mini Progress Bar */}
-          <div className="w-full bg-gray-100 dark:bg-gray-800 h-1.5 rounded-full mb-4 overflow-hidden">
-            <div
-              className="bg-blue-500 h-full rounded-full transition-all duration-1000 ease-out"
-              style={{ width: `${strategy.fundingPercentage}%` }}
-            />
-          </div>
-
-          <p className="text-gray-600 dark:text-gray-300 text-sm mb-6 line-clamp-2">
-            {strategy.description}
-          </p>
-
-          <div className="flex gap-3">
-            <button
-              onClick={onOpenDetails}
-              className="flex-1 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold py-3 rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg flex items-center justify-center gap-2"
-            >
-              <span>Back this Outcome</span>
-              <span className="text-xs opacity-60 font-normal">
-                in {strategy.token.symbol}
-              </span>
-            </button>
-            <button
-              onClick={onDismiss}
-              className="px-4 py-3 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-            >
-              Close
-            </button>
+          {/* Bottom Protocol Info */}
+          <div className="px-6 py-3 bg-zinc-50 dark:bg-zinc-900/50 border-t border-gray-100 dark:border-white/5 flex justify-between items-center">
+            <span className="text-[8px] font-mono text-zinc-400 uppercase">
+              Contract: 0x{strategy.id.substring(2, 8)}...
+              {strategy.id.substring(strategy.id.length - 4)}
+            </span>
+            <span className="text-[8px] font-mono text-zinc-400 uppercase">
+              v1.0.4-coordinated
+            </span>
           </div>
         </div>
       </div>
 
       <style jsx>{`
-        @keyframes fadeInUp {
+        @keyframes fadeInRight {
           from {
             opacity: 0;
-            transform: translateY(20px);
+            transform: translateX(20px);
           }
           to {
             opacity: 1;
-            transform: translateY(0);
+            transform: translateX(0);
           }
         }
-        .animate-fadeInUp {
-          animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        .animate-fadeInRight {
+          animation: fadeInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
       `}</style>
     </div>

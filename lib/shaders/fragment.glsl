@@ -17,80 +17,64 @@ uniform float uOtherCardsOpacity;
 
 void main()
 {            
-                    
-    vec4 texel = texture2D(uWrapperTexture, vUv);
-
-    
-    if(texel.a==0.) discard;
-            
-
-
-    // Get UV coordinates for this image from the uniform array
+    // Get UV coordinates for this image from the atlas
     float xStart = vTextureCoords.x;
     float xEnd = vTextureCoords.y;
     float yStart = vTextureCoords.z;
     float yEnd = vTextureCoords.w;
 
-     vec2 atlasUV = vec2(
+    vec2 atlasUV = vec2(
         mix(xStart, xEnd, vUv.x),
-        mix(yStart, yEnd, (1.-vUv.y)*1.5)
+        mix(yStart, yEnd, 1.0 - vUv.y)
     );     
 
+    // Sample the generated strategy card from the atlas
+    vec4 color = texture2D(uAtlas, atlasUV);
     
+    // Sample blurry version for far away / out of focus
     vec4 blurryTexel = texture2D(uBlurryAtlas, atlasUV);
+    
+    // Mix based on visibility/distance (simulated by vVisibility)
+    color = mix(blurryTexel, color, smoothstep(0.0, 0.5, vVisibility));
 
-    // Sample the texture
-    vec4 color = texel.b<0.02 ? texture2D(uAtlas, atlasUV) : texel + blurryTexel*0.8;
-
-    // Apply focus fade
+    // Apply focus effects (Desaturate and darken non-focused cards)
     if (uFocusedCard >= 0.0 && vInstanceId != uFocusedCard) {
+        float gray = dot(color.rgb, vec3(0.299, 0.587, 0.114));
+        color.rgb = mix(color.rgb, vec3(gray), 0.8); // High desaturation for protocol look
+        color.rgb *= 0.4; // Darker background
         color.a *= uOtherCardsOpacity;
     }
     
     color.a *= vVisibility;
 
-    color.r = min(color.r, 1.);
-    color.g = min(color.g, 1.);
-    color.b = min(color.b, 1.);
-    
-    // Status-based visual effects
+    // Status-based visual effects (Brutalist style)
     // 0=draft, 1=active, 2=ending_soon, 3=completed_success, 4=completed_failure
     
-    vec3 borderGlow = vec3(0.0);
-    float glowIntensity = 0.0;
+    vec3 statusOverlay = vec3(0.0);
+    float overlayIntensity = 0.0;
     
-    // Calculate distance from edge for border effect
+    // Calculate distance from edge for sharp border effect
     float edgeDist = min(min(vUv.x, 1.0 - vUv.x), min(vUv.y, 1.0 - vUv.y));
-    float borderMask = smoothstep(0.0, 0.05, edgeDist);
     
-    if (vStrategyStatus == 1.0) {
-        // Active: Blue glow
-        borderGlow = vec3(0.3, 0.5, 1.0);
-        glowIntensity = 0.3 * (1.0 - borderMask);
-    } else if (vStrategyStatus == 2.0) {
-        // Ending Soon: Red pulsing glow
-        float pulse = sin(uTime * 3.0) * 0.5 + 0.5;
-        borderGlow = vec3(1.0, 0.2, 0.2);
-        glowIntensity = (0.5 + pulse * 0.3) * (1.0 - borderMask);
-    } else if (vStrategyStatus == 3.0) {
-        // Completed Success: Green glow
-        borderGlow = vec3(0.2, 1.0, 0.3);
-        glowIntensity = 0.2 * (1.0 - borderMask);
+    if (vStrategyStatus == 2.0) {
+        // Ending Soon: High-contrast red flash
+        float flash = step(0.5, sin(uTime * 10.0)); // Sharp flashing
+        if (edgeDist < 0.05) {
+            color.rgb = mix(color.rgb, vec3(1.0, 0.0, 0.0), flash);
+        }
     } else if (vStrategyStatus == 4.0) {
-        // Completed Failure: Grayscale + dim
+        // Completed Failure: Heavy grayscale + "Archived" look
         float gray = dot(color.rgb, vec3(0.299, 0.587, 0.114));
-        color.rgb = mix(color.rgb, vec3(gray), 0.7);
-        color.rgb *= 0.5; // Dim failed strategies
+        color.rgb = vec3(gray * 0.5);
     }
     
-    // Apply border glow
-    color.rgb = mix(color.rgb, borderGlow, glowIntensity);
-
-    // Hover effect: Brighten and add white border glow
+    // Hover effect: Sharp white border + brightness
     if (uHoveredCard >= 0.0 && vInstanceId == uHoveredCard) {
-        float hoverBorder = smoothstep(0.0, 0.08, edgeDist);
-        color.rgb = mix(color.rgb, vec3(1.0), (1.0 - hoverBorder) * uHoverIntensity * 0.5);
-        color.rgb += 0.15 * uHoverIntensity; // Subtle brightness boost
+        // Thick white border on hover
+        if (edgeDist < 0.03) {
+            color.rgb = mix(color.rgb, vec3(1.0), uHoverIntensity);
+        }
+        color.rgb += 0.1 * uHoverIntensity;
     }
 
     gl_FragColor = color;

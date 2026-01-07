@@ -22,6 +22,7 @@ export default function Home() {
     null
   );
   const [focusedStrategy, setFocusedStrategy] = useState<Strategy | null>(null);
+  const [showPreviewUI, setShowPreviewUI] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [strategies] = useState<Strategy[]>(STRATEGIES);
   const [app, setApp] = useState<App | null>(null);
@@ -29,6 +30,8 @@ export default function Home() {
 
   const { address } = useAccount();
   const { writeContractAsync } = useWriteContract();
+
+  const [isZenMode, setIsZenMode] = useState(false);
 
   // Initialize Canvas
   useEffect(() => {
@@ -41,11 +44,19 @@ export default function Home() {
         const strategyIndex = instanceId % strategies.length;
         setFocusedStrategy(strategies[strategyIndex]);
         newApp.canvas.planes.setPaused(true);
+
+        // Delay UI appearance to match 3D animation
+        setTimeout(() => {
+          setShowPreviewUI(true);
+        }, 400);
       });
 
       // Unfocus callback - Hide preview
       newApp.canvas.focusManager?.onUnfocus(() => {
-        setFocusedStrategy(null);
+        setShowPreviewUI(false);
+        setTimeout(() => {
+          setFocusedStrategy(null);
+        }, 300);
         newApp.canvas.planes.setPaused(false);
       });
 
@@ -179,41 +190,59 @@ export default function Home() {
       </Head>
 
       {/* 3D Canvas */}
-      <canvas id="webgl" />
+      <canvas id="webgl" className="fixed inset-0 z-0 outline-none" />
 
-      <ActivityToast />
+      {!isZenMode && (
+        <>
+          <ActivityToast />
 
-      {/* Navigation HUD */}
-      <NavigationHUD
-        onCreateStrategy={handleCreateStrategy}
-        onFilterChange={handleFilterChange}
-      />
+          {/* Navigation HUD */}
+          <NavigationHUD
+            onCreateStrategy={handleCreateStrategy}
+            onFilterChange={handleFilterChange}
+          />
 
-      {/* Strategy Preview (Intermediate State) */}
-      {focusedStrategy && !isModalOpen && (
-        <StrategyPreview
-          strategy={focusedStrategy}
-          onOpenDetails={handleOpenDetails}
-          onDismiss={handleDismissPreview}
-        />
+          {/* Strategy Preview (Intermediate State) */}
+          {focusedStrategy && showPreviewUI && !isModalOpen && (
+            <StrategyPreview
+              strategy={focusedStrategy}
+              onOpenDetails={handleOpenDetails}
+              onDismiss={handleDismissPreview}
+            />
+          )}
+
+          {/* Strategy Detail Modal */}
+          <StrategyModal
+            strategy={selectedStrategy}
+            isOpen={isModalOpen}
+            onClose={handleCloseModal}
+            currentUserAddress={address}
+            onOptIn={handleOptIn}
+            onContribute={handleContribute}
+          />
+
+          {/* Strategy Builder */}
+          <StrategyBuilder
+            isOpen={isBuilderOpen}
+            onClose={() => setIsBuilderOpen(false)}
+            onPublish={handlePublishStrategy}
+          />
+        </>
       )}
 
-      {/* Strategy Detail Modal */}
-      <StrategyModal
-        strategy={selectedStrategy}
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        currentUserAddress={address}
-        onOptIn={handleOptIn}
-        onContribute={handleContribute}
-      />
-
-      {/* Strategy Builder */}
-      <StrategyBuilder
-        isOpen={isBuilderOpen}
-        onClose={() => setIsBuilderOpen(false)}
-        onPublish={handlePublishStrategy}
-      />
+      {/* Zen Mode Toggle (Always Visible or Floating) */}
+      <button
+        onClick={() => setIsZenMode(!isZenMode)}
+        className="fixed bottom-6 right-6 z-[60] p-3 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white transition-all shadow-xl group"
+        aria-label="Toggle Zen Mode"
+      >
+        <div className="flex items-center gap-2 px-1">
+          <span className="text-lg">{isZenMode ? "🖥️" : "✨"}</span>
+          <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 text-xs font-bold uppercase tracking-widest whitespace-nowrap">
+            {isZenMode ? "Show Interface" : "Zen Mode"}
+          </span>
+        </div>
+      </button>
     </>
   );
 }
