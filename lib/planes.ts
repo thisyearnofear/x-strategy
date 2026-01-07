@@ -109,18 +109,8 @@ export default class Planes {
       return
     }
     
-    // 2. Repeat these textures to fill meshCount (400 instances)
-    const repeatedUrls: string[] = []
-    const repetitions = Math.ceil(this.meshCount / uniqueCardUrls.length)
-    
-    for (let i = 0; i < repetitions; i++) {
-      repeatedUrls.push(...uniqueCardUrls)
-    }
-    
-    // 3. Trim to exact meshCount
-    const urls = repeatedUrls.slice(0, this.meshCount)
-    
-    await this.loadTextureAtlas(urls)
+    // 2. Load only the UNIQUE images into the atlas to keep texture size small
+    await this.loadTextureAtlas(uniqueCardUrls)
     this.createBlurryAtlas()
     this.fillMeshData()
   }
@@ -355,7 +345,8 @@ export default class Planes {
       initialPosition[i * 3 + 2] = zPosition
 
       meshSpeed[i] = Math.random() * 0.5 + 0.5
-
+      
+      // Correctly map 400 instances to the unique images in the atlas
       const imageIndex = i % this.imageInfos.length
 
       aTextureCoords[i * 4 + 0] = this.imageInfos[imageIndex].uvs.xStart

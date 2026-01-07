@@ -226,9 +226,9 @@ export class StrategyCardGenerator {
    * Draw image to fill specific area
    */
   private async drawProfileImage(url: string) {
+    const ctx = this.ctx
     try {
       const img = await this.loadImage(url)
-      const ctx = this.ctx
 
       // Cover behavior for the top section
       const targetWidth = 512
@@ -246,7 +246,21 @@ export class StrategyCardGenerator {
       ctx.fillRect(0, 0, 512, 330)
       ctx.restore()
     } catch (err) {
-      console.warn('Failed to load profile image:', url)
+      // Fallback: Draw a brutalist geometric pattern or solid color if image fails
+      ctx.fillStyle = '#111111'
+      ctx.fillRect(0, 0, 512, 330)
+      
+      // Add a simple "X" for brutalist placeholder feel
+      ctx.strokeStyle = '#333333'
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.moveTo(0, 0)
+      ctx.lineTo(512, 330)
+      ctx.moveTo(512, 0)
+      ctx.lineTo(0, 330)
+      ctx.stroke()
+      
+      console.warn('Using fallback for profile image due to load error:', url)
     }
   }
 
@@ -279,9 +293,20 @@ export class StrategyCardGenerator {
   private async loadImage(url: string): Promise<HTMLImageElement> {
     return new Promise((resolve, reject) => {
       const img = new Image()
-      img.crossOrigin = 'anonymous'
+      
+      // If it's a zora avatar, it's likely to fail CORS. 
+      // We don't use crossOrigin for images that don't support it, 
+      // but canvas needs it to not be "tainted".
+      // If it fails, we catch it in drawProfileImage.
+      if (url.includes('zora.co') || url.includes('farcaster')) {
+        img.crossOrigin = 'anonymous'
+      }
+      
       img.onload = () => resolve(img)
-      img.onerror = reject
+      img.onerror = (e) => {
+        console.warn(`Failed to load image: ${url}. This is likely a CORS issue.`)
+        reject(e)
+      }
       img.src = url
     })
   }
