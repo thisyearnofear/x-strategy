@@ -3,6 +3,7 @@ varying vec2 vUv;
 attribute vec3 aInitialPosition;
 attribute float aMeshSpeed;
 attribute vec4 aTextureCoords;
+attribute float aStrategyStatus;
 
 
 uniform float uTime;
@@ -15,6 +16,8 @@ uniform float uScrollY;
 
 varying float vVisibility;
 varying vec4 vTextureCoords;
+varying float vStrategyStatus;
+varying float vInstanceId;
 
 
 //linear smoothstep
@@ -71,4 +74,6 @@ void main()
 
     vUv = uv;
     vTextureCoords = aTextureCoords;
+    vStrategyStatus = aStrategyStatus;
+    vInstanceId = float(gl_InstanceID);
 }

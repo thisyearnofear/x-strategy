@@ -3,7 +3,7 @@ import vertexShader from "./shaders/vertex.glsl"
 import fragmentShader from "./shaders/fragment.glsl"
 import { Size } from "./types/types"
 import normalizeWheel from "normalize-wheel"
-import { get30NewReleaseCovers } from "./spotify"
+import { STRATEGIES } from "./data/strategies"
 
 interface Props {
   scene: THREE.Scene
@@ -27,6 +27,7 @@ export default class Planes {
   geometry: THREE.PlaneGeometry
   material: THREE.ShaderMaterial
   mesh: THREE.InstancedMesh
+  instancedMesh: THREE.InstancedMesh // Alias for compatibility
   meshCount: number = 400
   sizes: Size
   drag: {
@@ -69,6 +70,7 @@ export default class Planes {
   imageInfos: ImageInfo[] = []
   atlasTexture: THREE.Texture | null = null
   blurryAtlasTexture: THREE.Texture | null = null
+  onClickCallback?: (instanceId: number) => void
 
   constructor({ scene, sizes }: Props) {
     this.scene = scene
@@ -82,7 +84,7 @@ export default class Planes {
     this.createGeometry()
     this.createMaterial()
     this.createInstancedMesh()
-    this.fetchCovers()
+    this.fetchStrategyProfiles()
 
     window.addEventListener("wheel", this.onWheel.bind(this))
   }
@@ -92,8 +94,29 @@ export default class Planes {
     this.geometry.scale(2, 2, 2)
   }
 
-  async fetchCovers() {
-    const urls: string[] = await get30NewReleaseCovers()
+  async fetchStrategyProfiles() {
+    // Get profile images from strategies (creator avatars)
+    // Filter out undefined avatars and repeat to fill the gallery with 400 instances
+    const profileUrls = STRATEGIES
+      .map(s => s.creator.avatarUrl)
+      .filter((url): url is string => url !== undefined)
+    
+    if (profileUrls.length === 0) {
+      console.error('No profile URLs found in strategies')
+      return
+    }
+    
+    // Repeat profiles to fill meshCount (400 instances)
+    const repeatedUrls: string[] = []
+    const repetitions = Math.ceil(this.meshCount / profileUrls.length)
+    
+    for (let i = 0; i < repetitions; i++) {
+      repeatedUrls.push(...profileUrls)
+    }
+    
+    // Trim to exact meshCount
+    const urls = repeatedUrls.slice(0, this.meshCount)
+    
     await this.loadTextureAtlas(urls)
     this.createBlurryAtlas()
     this.fillMeshData()
@@ -223,6 +246,8 @@ export default class Planes {
         // Calculate total length of the gallery
         uSpeedY: { value: 0 },
         uDrag: { value: new THREE.Vector2(0, 0) },
+        uFocusedCard: { value: -1.0 },
+        uOtherCardsOpacity: { value: 1.0 },
       },
     })
   }
@@ -233,13 +258,34 @@ export default class Planes {
       this.material,
       this.meshCount
     )
+    this.instancedMesh = this.mesh // Create alias
     this.scene.add(this.mesh)
+  }
+
+  /**
+   * Handle click on a specific plane instance
+   */
+  onPlaneClick(instanceId: number) {
+    console.log(`Clicked on strategy card: ${instanceId}`)
+    
+    // Call the callback if registered
+    if (this.onClickCallback) {
+      this.onClickCallback(instanceId)
+    }
+  }
+
+  /**
+   * Register a callback for plane clicks
+   */
+  setClickCallback(callback: (instanceId: number) => void) {
+    this.onClickCallback = callback
   }
 
   fillMeshData() {
     const initialPosition = new Float32Array(this.meshCount * 3)
     const meshSpeed = new Float32Array(this.meshCount)
     const aTextureCoords = new Float32Array(this.meshCount * 4)
+    const aStrategyStatus = new Float32Array(this.meshCount) // Status for shader effects
 
     for (let i = 0; i < this.meshCount; i++) {
       initialPosition[i * 3 + 0] =
@@ -247,9 +293,37 @@ export default class Planes {
       initialPosition[i * 3 + 1] =
         (Math.random() - 0.5) * this.shaderParameters.maxY * 2 // y
 
-      //from -15 to 7
+      // Z-axis positioning based on strategy lifecycle
+      // Map instance to strategy
+      const strategyIndex = i % STRATEGIES.length
+      const strategy = STRATEGIES[strategyIndex]
+      
+      let zPosition = 0
+      
+      // Position by status for visual hierarchy
+      switch (strategy.status) {
+        case 'active':
+          // Active strategies at front (z = -5 to 5)
+          zPosition = Math.random() * 10 - 5
+          break
+        case 'ending_soon':
+          // Ending soon strategies even closer (z = 0 to 10) - URGENT
+          zPosition = Math.random() * 10
+          break
+        case 'completed_success':
+          // Completed strategies at back (z = -20 to -30)
+          zPosition = Math.random() * -10 - 20
+          break
+        case 'completed_failure':
+          // Failed strategies far back (z = -30 to -40)
+          zPosition = Math.random() * -10 - 30
+          break
+        default:
+          // Default position
+          zPosition = Math.random() * 20 - 10
+      }
 
-      initialPosition[i * 3 + 2] = Math.random() * (7 - -30) - 30 // z
+      initialPosition[i * 3 + 2] = zPosition
 
       meshSpeed[i] = Math.random() * 0.5 + 0.5
 
@@ -259,6 +333,18 @@ export default class Planes {
       aTextureCoords[i * 4 + 1] = this.imageInfos[imageIndex].uvs.xEnd
       aTextureCoords[i * 4 + 2] = this.imageInfos[imageIndex].uvs.yStart
       aTextureCoords[i * 4 + 3] = this.imageInfos[imageIndex].uvs.yEnd
+      
+      // Store status as float for shader (0=draft, 1=active, 2=ending_soon, 3=completed_success, 4=completed_failure)
+      const statusMap: Record<string, number> = {
+        'draft': 0,
+        'active': 1,
+        'ending_soon': 2,
+        'completed_success': 3,
+        'completed_failure': 4,
+        'unwinding': 5,
+        'cancelled': 6,
+      }
+      aStrategyStatus[i] = statusMap[strategy.status] || 0
     }
 
     this.geometry.setAttribute(
@@ -268,6 +354,10 @@ export default class Planes {
     this.geometry.setAttribute(
       "aMeshSpeed",
       new THREE.InstancedBufferAttribute(meshSpeed, 1)
+    )
+    this.geometry.setAttribute(
+      "aStrategyStatus",
+      new THREE.InstancedBufferAttribute(aStrategyStatus, 1)
     )
 
     this.mesh.geometry.setAttribute(

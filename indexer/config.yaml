@@ -1,0 +1,22 @@
+name: x-strategy-indexer
+field_selection:
+  transaction_fields:
+    - hash
+networks:
+  - id: 84532
+    start_block: 0
+    contracts:
+      - name: XStrategyFactory
+        address:
+          - "0x0000000000000000000000000000000000000000" # UPDATE WITH DEPLOYED ADDRESS
+        handler: src/EventHandlers.ts
+        events:
+          - event: StrategyCreated(address indexed strategy, address indexed strategyCreator, address indexed designatedCreator, address token, uint256 targetAmount, uint256 deadline)
+          - event: CreatorReputationUpdated(address indexed creator, uint256 newScore)
+      - name: XStrategy
+        address: [] # Dynamic
+        handler: src/EventHandlers.ts
+        events:
+          - event: CreatorOptedIn(address indexed creator, uint256 stakeAmount)
+          - event: ContributionConfirmed(address indexed contributor, uint256 ethAmount, uint256 tokensReceived)
+          - event: StrategyCompleted(bool success)

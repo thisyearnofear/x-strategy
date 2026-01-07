@@ -1,0 +1,34 @@
+type Strategy @entity {
+  id: ID!
+  address: Bytes!
+  creator: Bytes!
+  designatedCreator: Bytes!
+  token: Bytes!
+  targetAmount: BigInt!
+  deadline: BigInt!
+  status: String! # PENDING_CREATOR, ACTIVE, COMPLETED
+  currentAmountETH: BigInt!
+  tokensHeld: BigInt!
+  creatorStake: BigInt!
+  createdAt: BigInt!
+  completedAt: BigInt
+  success: Boolean
+}
+
+type Creator @entity {
+  id: ID!
+  address: Bytes!
+  reputationScore: BigInt!
+  strategiesCreatedCount: BigInt!
+  strategiesCompletedCount: BigInt!
+}
+
+type Contribution @entity {
+  id: ID!
+  strategy: Strategy!
+  contributor: Bytes!
+  amountETH: BigInt!
+  tokensReceived: BigInt!
+  timestamp: BigInt!
+  txHash: Bytes!
+}

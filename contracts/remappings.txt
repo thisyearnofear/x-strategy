@@ -1,0 +1,3 @@
+@openzeppelin/=lib/openzeppelin-contracts/
+@0xsplits/splits-contracts/=lib/splits-contracts/
+forge-std/=lib/forge-std/src/
