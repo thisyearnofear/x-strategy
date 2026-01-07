@@ -5,26 +5,32 @@ import '@rainbow-me/rainbowkit/styles.css'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { WagmiProvider } from 'wagmi'
-import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit'
+import { ThemeProvider } from 'next-themes'
+import { RainbowKitProvider, darkTheme, lightTheme } from '@rainbow-me/rainbowkit'
 import { wagmiConfig } from '../lib/config/wagmi'
+import { useEffect, useState } from 'react'
 
 const queryClient = new QueryClient()
 
 function MyApp({ Component, pageProps }: AppProps) {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   return (
-    <WagmiProvider config={wagmiConfig}>
-      <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider
-          theme={darkTheme({
-            accentColor: '#3b82f6',
-            accentColorForeground: 'white',
-            borderRadius: 'large',
-          })}
-        >
-          <Component {...pageProps} />
-        </RainbowKitProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <WagmiProvider config={wagmiConfig}>
+        <QueryClientProvider client={queryClient}>
+          <RainbowKitProvider
+            theme={null} // Let next-themes handle it via custom CSS or dynamic theme
+          >
+            {mounted && <Component {...pageProps} />}
+          </RainbowKitProvider>
+        </QueryClientProvider>
+      </WagmiProvider>
+    </ThemeProvider>
   )
 }
 

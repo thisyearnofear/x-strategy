@@ -1,5 +1,9 @@
 # Development Guide
 
+## 🎯 Coordination-Focused Development
+
+This guide provides comprehensive workflows for building and extending the X-Strategy coordination protocol. Whether you're developing smart contracts, frontend interfaces, or backend services, this documentation will help you contribute to transforming tokens into effective coordination instruments.
+
 ## 🚀 Quick Start
 
 ### Environment Setup
@@ -105,32 +109,32 @@ forge script script/Deploy.s.sol \
 
 ### Frontend Development
 
-#### Component Structure
+#### Component Structure for Coordination Interfaces
 ```
 components/
-├── strategy/          # Strategy-related components
-├── gallery/           # 3D visualization
-├── builder/           # Strategy creation UI
-└── shared/            # Reusable components
+├── strategy/          # Strategy coordination components
+├── gallery/           # 3D visualization of coordination networks
+├── builder/           # Strategy creation coordination UI
+└── shared/            # Reusable coordination-focused components
 ```
 
-#### Key Hooks
+#### Coordination Hooks
 ```typescript
-// Reading strategy data
+// Reading strategy coordination data
 const { data: strategyInfo } = useStrategyData(address);
 
-// Contributing to strategy
+// Participating in coordination
 const { contribute, isLoading } = useContribute(address);
 
-// Creator opt-in
+// Creator commitment to coordination
 const { optIn, isSuccess } = useOptIn(address);
 ```
 
-#### 3D Gallery Integration
+#### 3D Coordination Gallery Integration
 ```typescript
 import { StrategyGallery } from '@/components/gallery/StrategyGallery';
 
-// Usage in page
+// Visualizing coordination networks
 <StrategyGallery 
   strategies={strategyData}
   onSelect={handleStrategySelect}
@@ -160,11 +164,11 @@ npm run inspect:strategies
 npm run monitor:transactions
 ```
 
-## 🔄 Integration Patterns
+## 🔄 Coordination Integration Patterns
 
-### Frontend ↔ Smart Contract
+### Frontend ↔ Smart Contract Coordination
 
-#### Reading Data
+#### Reading Coordination Data
 ```typescript
 import { useReadContract } from 'wagmi';
 import { XStrategyABI } from '@/contracts/abis';
@@ -176,7 +180,7 @@ const { data: status } = useReadContract({
 });
 ```
 
-#### Writing Data
+#### Participating in Coordination
 ```typescript
 import { useWriteContract } from 'wagmi';
 

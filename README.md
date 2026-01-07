@@ -1,16 +1,17 @@
 # X-Strategy Protocol
 
-A decentralized protocol for milestone-based fundraising with automated downside protection.
+Transforming tokens into coordination instruments, not just speculative assets.
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/x-strategy/ci.yml)](https://github.com/x-strategy/actions)
 
-## 🎯 Overview
+## 🎯 Vision
 
-X-Strategy enables creators to raise capital for projects while protecting contributors through smart contract automation. The protocol pools funds, executes token purchases, and automatically unwinds failed strategies with built-in protections.
+X-Strategy transforms tokens from mere speculative assets into powerful coordination instruments. We enable creators to raise capital for meaningful projects while protecting contributors through smart contract automation. Our protocol pools funds, executes token purchases, and automatically unwinds failed strategies with built-in protections.
 
-## 🚀 Quick Start
+## 🚀 Getting Started
 
+### Quick Setup
 ```bash
 # Clone and setup
 git clone https://github.com/x-strategy/x-strategy.git
@@ -23,35 +24,30 @@ npm install
 npm run dev
 ```
 
-## 📚 Documentation
+### Explore the Protocol
+- **[Documentation Hub](docs/DOCUMENTATION_OVERVIEW.md)** - Complete project overview and navigation
+- **[Technical Architecture](docs/TECHNICAL_ARCHITECTURE.md)** - Smart contract design and system architecture  
+- **[Development Guide](docs/DEVELOPMENT_GUIDE.md)** - Developer workflows and integration patterns
+- **[Deployment Operations](docs/DEPLOYMENT_OPERATIONS.md)** - Production deployment procedures
 
-All documentation has been consolidated into four focused guides:
-
-| Document | Purpose | Length |
-|----------|---------|--------|
-| [**Documentation Overview**](docs/DOCUMENTATION_OVERVIEW.md) | Project vision, quick start, and navigation | ~100 lines |
-| [**Technical Architecture**](docs/TECHNICAL_ARCHITECTURE.md) | Smart contract design and system architecture | ~200 lines |
-| [**Development Guide**](docs/DEVELOPMENT_GUIDE.md) | Developer workflows and integration patterns | ~200 lines |
-| [**Deployment Operations**](docs/DEPLOYMENT_OPERATIONS.md) | Deployment procedures and operational guidelines | ~200 lines |
-
-## 🏗️ Core Components
+## 🏗️ Core Architecture
 
 ### Smart Contracts
-- **XStrategyFactory.sol** - Strategy deployment and management
-- **XStrategy.sol** - Individual strategy logic with escrow and milestones
-- Built with minimal custom logic leveraging audited primitives
+- **XStrategyFactory.sol** - Strategy deployment and lifecycle management
+- **XStrategy.sol** - Individual strategy logic with escrow, milestones, and automated protection
+- Built with minimal custom logic leveraging battle-tested primitives
 
-### Services
-- **Backend Operator** - Node.js service for token swaps via 0x API
-- **Frontend Application** - Next.js app with 3D visualization
-- **Indexer** (planned) - Event indexing and analytics
+### Services Layer
+- **Backend Operator** - Node.js service orchestrating token swaps via 0x API
+- **Frontend Application** - Next.js interface with immersive 3D visualization
+- **Indexer** (planned) - Real-time event indexing and analytics engine
 
-## 🔄 How It Works
+## 🔄 Coordination Workflow
 
-1. **Create Strategy** - Define milestones, token, and funding goals
-2. **Raise Capital** - Contributors send ETH, operator buys tokens
-3. **Execute Milestones** - Creator completes predefined outcomes
-4. **Distribution** - Success rewards all, failure refunds contributors
+1. **Strategy Creation** - Define measurable milestones, token targets, and funding goals
+2. **Capital Coordination** - Contributors pool resources, operator executes token purchases
+3. **Outcome Verification** - Creator delivers predefined milestones with transparent proof
+4. **Value Distribution** - Success rewards participants, failure triggers automatic refunds
 
 ## 🛠️ Development
 
@@ -95,13 +91,14 @@ forge script script/Deploy.s.sol --rpc-url base_sepolia --broadcast --verify
 ### Mainnet
 Follow the detailed [Deployment Operations](docs/DEPLOYMENT_OPERATIONS.md) guide for production deployment.
 
-## 🔧 Key Features
+## 🔧 Key Capabilities
 
-- **Capital Pooling** - Efficient fund aggregation
-- **Automated Protection** - Built-in downside safeguards
-- **Milestone Tracking** - Measurable outcome verification
-- **Gas Efficiency** - Optimized contract design
-- **MEV Protection** - Secure token swapping via 0x API
+- **Capital Pooling** - Efficient fund aggregation with shared risk/reward
+- **Automated Protection** - Built-in downside safeguards through smart contracts
+- **Milestone Tracking** - Verifiable outcome-based progress measurement
+- **Gas Optimization** - Efficient contract design minimizing transaction costs
+- **MEV Protection** - Secure token swapping via decentralized exchange aggregation
+- **Coordination Signals** - Time-locked information sharing for informed participation
 
 ## 📊 Status
 

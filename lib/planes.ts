@@ -1,4 +1,5 @@
 import * as THREE from "three"
+import gsap from "gsap"
 import vertexShader from "./shaders/vertex.glsl"
 import fragmentShader from "./shaders/fragment.glsl"
 import { Size } from "./types/types"
@@ -71,6 +72,8 @@ export default class Planes {
   atlasTexture: THREE.Texture | null = null
   blurryAtlasTexture: THREE.Texture | null = null
   onClickCallback?: (instanceId: number) => void
+
+  paused: boolean = false
 
   constructor({ scene, sizes }: Props) {
     this.scene = scene
@@ -247,9 +250,37 @@ export default class Planes {
         uSpeedY: { value: 0 },
         uDrag: { value: new THREE.Vector2(0, 0) },
         uFocusedCard: { value: -1.0 },
+        uHoveredCard: { value: -1.0 },
+        uHoverIntensity: { value: 0.0 },
         uOtherCardsOpacity: { value: 1.0 },
       },
     })
+  }
+
+  setHoveredInstance(instanceId: number | null) {
+    if (this.paused) return;
+    
+    const targetId = instanceId === null ? -1.0 : instanceId;
+    if (this.material.uniforms.uHoveredCard.value === targetId) return;
+
+    // Use GSAP for smooth hover intensity
+    if (instanceId !== null) {
+      this.material.uniforms.uHoveredCard.value = targetId;
+      gsap.to(this.material.uniforms.uHoverIntensity, {
+        value: 1.0,
+        duration: 0.3,
+        ease: "power2.out"
+      });
+    } else {
+      gsap.to(this.material.uniforms.uHoverIntensity, {
+        value: 0.0,
+        duration: 0.3,
+        ease: "power2.out",
+        onComplete: () => {
+          this.material.uniforms.uHoveredCard.value = -1.0;
+        }
+      });
+    }
   }
 
   createInstancedMesh() {
@@ -279,6 +310,13 @@ export default class Planes {
    */
   setClickCallback(callback: (instanceId: number) => void) {
     this.onClickCallback = callback
+  }
+
+  /**
+   * Set paused state
+   */
+  setPaused(paused: boolean) {
+    this.paused = paused
   }
 
   fillMeshData() {
@@ -370,6 +408,7 @@ export default class Planes {
     this.dragElement = element
 
     const onPointerDown = (e: PointerEvent) => {
+      if (this.paused) return
       this.drag.isDown = true
       this.drag.startX = e.clientX
       this.drag.startY = e.clientY
@@ -408,6 +447,7 @@ export default class Planes {
   }
 
   onWheel(event: MouseEvent) {
+    if (this.paused) return
     const normalizedWheel = normalizeWheel(event)
 
     let scrollY =

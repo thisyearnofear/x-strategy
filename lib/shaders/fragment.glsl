@@ -9,6 +9,8 @@ uniform sampler2D uAtlas;
 uniform sampler2D uBlurryAtlas;
 uniform float uTime;
 uniform float uFocusedCard;
+uniform float uHoveredCard;
+uniform float uHoverIntensity;
 uniform float uOtherCardsOpacity;
 
 
@@ -83,6 +85,13 @@ void main()
     
     // Apply border glow
     color.rgb = mix(color.rgb, borderGlow, glowIntensity);
+
+    // Hover effect: Brighten and add white border glow
+    if (uHoveredCard >= 0.0 && vInstanceId == uHoveredCard) {
+        float hoverBorder = smoothstep(0.0, 0.08, edgeDist);
+        color.rgb = mix(color.rgb, vec3(1.0), (1.0 - hoverBorder) * uHoverIntensity * 0.5);
+        color.rgb += 0.15 * uHoverIntensity; // Subtle brightness boost
+    }
 
     gl_FragColor = color;
 }

@@ -40,6 +40,14 @@ export default class Canvas {
     this.render()
   }
 
+  setTheme(theme: string) {
+    if (theme === 'dark') {
+      this.renderer.setClearColor(0x000000, 0) // Transparent for CSS background
+    } else {
+      this.renderer.setClearColor(0xffffff, 0) // Transparent for CSS background
+    }
+  }
+
   createScene() {
     this.scene = new THREE.Scene()
   }
@@ -119,6 +127,23 @@ export default class Canvas {
   onMouseMove(event: MouseEvent) {
     this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1
     this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
+
+    // Update raycaster for hover
+    this.raycaster.setFromCamera(this.mouse, this.camera)
+    
+    if (this.planes && this.planes.instancedMesh) {
+      const intersects = this.raycaster.intersectObject(this.planes.instancedMesh)
+      if (intersects.length > 0) {
+        const instanceId = intersects[0].instanceId
+        if (instanceId !== undefined) {
+          this.planes.setHoveredInstance(instanceId)
+          document.body.style.cursor = 'pointer'
+        }
+      } else {
+        this.planes.setHoveredInstance(null)
+        document.body.style.cursor = 'default'
+      }
+    }
   }
 
   addEventListeners() {

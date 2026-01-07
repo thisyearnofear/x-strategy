@@ -1,17 +1,21 @@
 # Technical Architecture
 
+## 🎯 Coordination Framework
+
+X-Strategy transforms tokens into coordination instruments through a sophisticated multi-layer architecture designed for trust-minimized collaboration. Our system enables outcome-backed capital coordination while maintaining robust security and automated governance.
+
 ## 🏗️ System Architecture
 
 ### Core Contract Design
 
-The X-Strategy protocol consists of two primary smart contracts built with minimal custom logic leveraging audited primitives:
+The X-Strategy protocol implements a coordination-focused architecture consisting of two primary smart contracts built with minimal custom logic leveraging audited primitives:
 
 #### XStrategyFactory.sol
-**Purpose**: Strategy deployment and protocol management
-- Deploys new XStrategy contracts
-- Maintains creator and contributor reputation tracking
-- Manages authorized operators for off-chain swaps
-- Emergency controls for pausing strategies
+**Purpose**: Strategy deployment and protocol-wide coordination management
+- Deploys new XStrategy contracts for individual coordination initiatives
+- Maintains creator and contributor reputation tracking for trust building
+- Manages authorized operators for secure off-chain token acquisition
+- Provides emergency controls for pausing strategies when coordination breaks down
 
 **Key Features**:
 ```solidity
