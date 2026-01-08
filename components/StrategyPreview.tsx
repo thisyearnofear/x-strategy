@@ -4,12 +4,14 @@ import { Strategy } from "../lib/types/strategy";
 interface StrategyPreviewProps {
   strategy: Strategy;
   onOpenDetails: () => void;
+  onExpand: () => void;
   onDismiss: () => void;
 }
 
 export default function StrategyPreview({
   strategy,
   onOpenDetails,
+  onExpand,
   onDismiss,
 }: StrategyPreviewProps) {
   // Prevent click propagation to canvas
@@ -112,6 +114,12 @@ export default function StrategyPreview({
                 >
                   <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
+              </button>
+              <button
+                onClick={onExpand}
+                className="w-full py-3 text-[10px] font-black text-zinc-500 hover:text-zinc-900 dark:hover:text-white uppercase tracking-[0.3em] transition-colors border border-gray-200 dark:border-white/10"
+              >
+                [ Expand View ]
               </button>
               <button
                 onClick={onDismiss}

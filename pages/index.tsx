@@ -4,9 +4,9 @@ import { useAccount, useWriteContract } from "wagmi";
 import App from "../lib/main";
 import StrategyModal from "../components/StrategyModal";
 import NavigationHUD from "../components/NavigationHUD";
-import StrategyBuilder from "../components/builder/StrategyBuilder";
+import SimplifiedStrategyBuilder from "../components/builder/SimplifiedStrategyBuilder";
 import ActivityToast from "../components/ActivityToast";
-import { Strategy } from "../lib/types/strategy";
+import { Strategy, SimplifiedStrategy } from "../lib/types/strategy";
 import { STRATEGIES } from "../lib/data/strategies";
 import {
   XStrategyABI,
@@ -16,6 +16,7 @@ import {
 
 import { useTheme } from "next-themes";
 import StrategyPreview from "../components/StrategyPreview";
+import StrategyFullscreen from "../components/StrategyFullscreen";
 
 export default function Home() {
   const [selectedStrategy, setSelectedStrategy] = useState<Strategy | null>(
@@ -23,6 +24,7 @@ export default function Home() {
   );
   const [focusedStrategy, setFocusedStrategy] = useState<Strategy | null>(null);
   const [showPreviewUI, setShowPreviewUI] = useState(false);
+  const [isExpandedView, setIsExpandedView] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [strategies] = useState<Strategy[]>(STRATEGIES);
   const [app, setApp] = useState<App | null>(null);
@@ -67,7 +69,7 @@ export default function Home() {
         // If already focused, the focusManager handles the click to unfocus
       });
     }
-    return () => {};
+    return () => { };
   }, [strategies]);
 
   // Update theme in Canvas
@@ -95,7 +97,19 @@ export default function Home() {
     }
   };
 
+  const handleExpandView = () => {
+    setIsExpandedView(true);
+  };
+
   const handleDismissPreview = () => {
+    if (app && app.canvas && app.canvas.focusManager) {
+      app.canvas.focusManager.unfocusCard();
+    }
+  };
+
+  const handleDismissFullscreen = () => {
+    setIsExpandedView(false);
+    // Optionally unfocus the card when dismissing fullscreen
     if (app && app.canvas && app.canvas.focusManager) {
       app.canvas.focusManager.unfocusCard();
     }
@@ -103,41 +117,88 @@ export default function Home() {
 
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
 
+  const handlePublishStrategy = async (strategy: Partial<SimplifiedStrategy>) => {
+    if (!address || !writeContractAsync) return;
+
+    try {
+      console.log('Publishing simplified strategy:', strategy);
+
+      // Convert SimplifiedStrategy to contract arguments
+      const contractArgs = {
+        targetToken: strategy.targetToken || '',
+        fundingThreshold: strategy.fundingThreshold || BigInt(0),
+        targetAmount: strategy.targetAmount || BigInt(0),
+        creatorStake: strategy.creatorETHStake || BigInt(0),
+        fundingDeadline: strategy.fundingDeadline || 0,
+        executionDeadline: strategy.executionDeadline || 0,
+      };
+
+      // Call factory contract to create strategy
+      const tx = await writeContractAsync({
+        address: FACTORY_ADDRESS,
+        abi: XStrategyFactoryABI,
+        functionName: 'createStrategy',
+        args: [
+          contractArgs.targetToken,
+          contractArgs.fundingThreshold,
+          contractArgs.targetAmount,
+          contractArgs.creatorStake,
+          contractArgs.fundingDeadline,
+          contractArgs.executionDeadline,
+        ],
+      });
+
+      console.log('Strategy creation transaction:', tx);
+      setIsBuilderOpen(false);
+      alert('Strategy created successfully! Transaction: ' + tx);
+    } catch (error) {
+      console.error('Error creating strategy:', error);
+      alert('Error creating strategy: ' + (error as Error).message);
+    }
+  };
+
   const handleCreateStrategy = () => {
     setIsBuilderOpen(true);
   };
 
-  // Deploy Strategy via Factory
-  const handlePublishStrategy = async (strategy: any) => {
-    console.log("Publishing strategy:", strategy);
-    try {
-      // Map strategy draft to Contract arguments
-      // Note: strategy contains draft data directly here via builder callback
-      const unlockBps = strategy.milestones.map(
-        (m: any) => m.unlockPercentage * 100
-      );
+  // Deploy Simplified Strategy via Factory
+  const handlePublishSimplifiedStrategy = async (strategy: Partial<SimplifiedStrategy>) => {
+    if (!address || !writeContractAsync) return;
 
+    try {
+      console.log('Publishing simplified strategy:', strategy);
+
+      // Convert SimplifiedStrategy to contract arguments
+      const contractArgs = {
+        targetToken: strategy.targetToken || '',
+        fundingThreshold: strategy.fundingThreshold || BigInt(0),
+        targetAmount: strategy.targetAmount || BigInt(0),
+        creatorStake: strategy.creatorETHStake || BigInt(0),
+        fundingDeadline: strategy.fundingDeadline || 0,
+        executionDeadline: strategy.executionDeadline || 0,
+      };
+
+      // Call factory contract to create strategy
       const tx = await writeContractAsync({
         address: FACTORY_ADDRESS,
         abi: XStrategyFactoryABI,
-        functionName: "createStrategy",
+        functionName: 'createStrategy',
         args: [
-          strategy.token.address ||
-            "0x0000000000000000000000000000000000000000", // Mock if missing
-          strategy.designatedCreator || address, // Default to self if missing
-          BigInt(strategy.targetAmountUSD || 0) * BigInt(1e18), // Rough map
-          BigInt(
-            Math.floor(Date.now() / 1000) + (strategy.timeline || 30) * 86400
-          ),
-          unlockBps,
+          contractArgs.targetToken,
+          contractArgs.fundingThreshold,
+          contractArgs.targetAmount,
+          contractArgs.creatorStake,
+          contractArgs.fundingDeadline,
+          contractArgs.executionDeadline,
         ],
       });
 
+      console.log('Strategy creation transaction:', tx);
       setIsBuilderOpen(false);
-      alert(`Strategy Deployed! TX: ${tx}`);
-    } catch (e) {
-      console.error(e);
-      alert("Deployment failed. See console.");
+      alert('Strategy created successfully! Transaction: ' + tx);
+    } catch (error) {
+      console.error('Error creating strategy:', error);
+      alert('Error creating strategy: ' + (error as Error).message);
     }
   };
 
@@ -205,11 +266,20 @@ export default function Home() {
           />
 
           {/* Strategy Preview (Intermediate State) */}
-          {focusedStrategy && showPreviewUI && !isModalOpen && (
+          {focusedStrategy && showPreviewUI && !isModalOpen && !isExpandedView && (
             <StrategyPreview
               strategy={focusedStrategy}
               onOpenDetails={handleOpenDetails}
+              onExpand={handleExpandView}
               onDismiss={handleDismissPreview}
+            />
+          )}
+
+          {/* Strategy Fullscreen View */}
+          {focusedStrategy && isExpandedView && (
+            <StrategyFullscreen
+              strategy={focusedStrategy}
+              onDismiss={handleDismissFullscreen}
             />
           )}
 
@@ -223,11 +293,11 @@ export default function Home() {
             onContribute={handleContribute}
           />
 
-          {/* Strategy Builder */}
-          <StrategyBuilder
+          {/* Simplified Strategy Builder */}
+          <SimplifiedStrategyBuilder
             isOpen={isBuilderOpen}
             onClose={() => setIsBuilderOpen(false)}
-            onPublish={handlePublishStrategy}
+            onPublish={handlePublishSimplifiedStrategy}
           />
         </>
       )}
