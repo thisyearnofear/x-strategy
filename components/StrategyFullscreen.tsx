@@ -30,12 +30,12 @@ export default function StrategyFullscreen({
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
       onClick={onDismiss}
     >
       {/* Overlay */}
-      <div 
+      <div
         className="absolute inset-0 bg-black/80 backdrop-blur-sm pointer-events-auto"
         onClick={onDismiss}
       />
@@ -56,17 +56,17 @@ export default function StrategyFullscreen({
               className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
               aria-label="Close"
             >
-              <svg 
-                className="w-6 h-6 text-gray-900 dark:text-white" 
-                fill="none" 
-                stroke="currentColor" 
+              <svg
+                className="w-6 h-6 text-gray-900 dark:text-white"
+                fill="none"
+                stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M6 18L18 6M6 6l12 12" 
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
                 />
               </svg>
             </button>
@@ -148,7 +148,7 @@ export default function StrategyFullscreen({
                   Timeline
                 </p>
                 <p className="text-2xl font-black text-gray-900 dark:text-white">
-                  {strategy.timeline || 30}d
+                  {Math.ceil((strategy.deadline - strategy.createdAt) / (24 * 60 * 60 * 1000))}d
                 </p>
               </div>
             </div>
@@ -160,8 +160,8 @@ export default function StrategyFullscreen({
               </h3>
               <div className="space-y-3">
                 {strategy.milestones?.map((milestone, index) => (
-                  <div 
-                    key={index} 
+                  <div
+                    key={index}
                     className="flex items-center justify-between p-3 bg-gray-50 dark:bg-zinc-900/50 rounded-lg border border-gray-200 dark:border-white/10"
                   >
                     <span className="font-bold text-gray-900 dark:text-white">
