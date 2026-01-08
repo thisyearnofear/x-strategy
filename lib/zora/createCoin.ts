@@ -41,16 +41,24 @@ export async function createZoraCoin(
     const selectedChain = chain === 'base' ? base : zora
     
     // Get wallet client (assumes MetaMask or similar)
-    if (typeof window === 'undefined' || !(window as any).ethereum) {
+    if (typeof window === 'undefined' || !window.ethereum) {
       return {
         success: false,
         error: 'No wallet found. Please install MetaMask or similar.',
       }
     }
 
+    // Check if the provider supports the methods we need
+    if (!window.ethereum.request || typeof window.ethereum.request !== 'function') {
+      return {
+        success: false,
+        error: 'Wallet provider does not support required methods.',
+      }
+    }
+
     const walletClient = createWalletClient({
       chain: selectedChain,
-      transport: custom((window as any).ethereum),
+      transport: custom(window.ethereum),
     })
 
     const publicClient = createPublicClient({

@@ -299,15 +299,18 @@ export class StrategyCardGenerator {
   private async loadImage(url: string): Promise<HTMLImageElement> {
     return new Promise((resolve, reject) => {
       const img = new Image()
-      
-      // If it's a zora avatar, it's likely to fail CORS. 
-      // We don't use crossOrigin for images that don't support it, 
-      // but canvas needs it to not be "tainted".
-      // If it fails, we catch it in drawProfileImage.
-      if (url.includes('zora.co') || url.includes('farcaster')) {
-        img.crossOrigin = 'anonymous'
+
+      // Try to set crossOrigin for external resources that support CORS
+      // But handle cases where CORS might fail
+      try {
+        if (url.includes('zora.co') || url.includes('farcaster') || url.includes('ipfs')) {
+          img.crossOrigin = 'anonymous'
+        }
+      } catch (e) {
+        // If setting crossOrigin fails, continue without it
+        console.warn(`Could not set crossOrigin for image: ${url}`)
       }
-      
+
       img.onload = () => resolve(img)
       img.onerror = (e) => {
         console.warn(`Failed to load image: ${url}. This is likely a CORS issue.`)
