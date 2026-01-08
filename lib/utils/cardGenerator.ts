@@ -21,6 +21,12 @@ export const STATUS_STYLES: Record<StrategyStatus, CardStyle> = {
     textColor: '#cccccc',
     accentColor: '#666666',
   },
+  [StrategyStatus.FUNDING]: {
+    bgGradient: ['#1e3a8a', '#3b82f6'],
+    borderColor: '#60a5fa',
+    textColor: '#ffffff',
+    accentColor: '#93c5fd',
+  },
   [StrategyStatus.PENDING_CREATOR]: {
     bgGradient: ['#451a03', '#78350f'],
     borderColor: '#f59e0b',

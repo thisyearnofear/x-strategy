@@ -125,12 +125,11 @@ export default function Home() {
 
       // Convert SimplifiedStrategy to contract arguments
       const contractArgs = {
-        targetToken: strategy.targetToken || '',
-        fundingThreshold: strategy.fundingThreshold || BigInt(0),
+        targetToken: (strategy.targetToken || '0x0000000000000000000000000000000000000000') as `0x${string}`,
+        designatedCreator: (strategy.creatorAddress || address || '0x0000000000000000000000000000000000000000') as `0x${string}`,
         targetAmount: strategy.targetAmount || BigInt(0),
-        creatorStake: strategy.creatorETHStake || BigInt(0),
-        fundingDeadline: strategy.fundingDeadline || 0,
-        executionDeadline: strategy.executionDeadline || 0,
+        deadline: BigInt(strategy.executionDeadline || Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60), // Default to 30 days
+        milestoneUnlockBps: [2500, 5000, 7500, 10000], // 25%, 50%, 75%, 100% - example values
       };
 
       // Call factory contract to create strategy
@@ -140,11 +139,10 @@ export default function Home() {
         functionName: 'createStrategy',
         args: [
           contractArgs.targetToken,
-          contractArgs.fundingThreshold,
+          contractArgs.designatedCreator,
           contractArgs.targetAmount,
-          contractArgs.creatorStake,
-          contractArgs.fundingDeadline,
-          contractArgs.executionDeadline,
+          contractArgs.deadline,
+          contractArgs.milestoneUnlockBps,
         ],
       });
 
@@ -170,12 +168,11 @@ export default function Home() {
 
       // Convert SimplifiedStrategy to contract arguments
       const contractArgs = {
-        targetToken: strategy.targetToken || '',
-        fundingThreshold: strategy.fundingThreshold || BigInt(0),
+        targetToken: (strategy.targetToken || '0x0000000000000000000000000000000000000000') as `0x${string}`,
+        designatedCreator: (strategy.creatorAddress || address || '0x0000000000000000000000000000000000000000') as `0x${string}`,
         targetAmount: strategy.targetAmount || BigInt(0),
-        creatorStake: strategy.creatorETHStake || BigInt(0),
-        fundingDeadline: strategy.fundingDeadline || 0,
-        executionDeadline: strategy.executionDeadline || 0,
+        deadline: BigInt(strategy.executionDeadline || Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60), // Default to 30 days
+        milestoneUnlockBps: [2500, 5000, 7500, 10000], // 25%, 50%, 75%, 100% - example values
       };
 
       // Call factory contract to create strategy
@@ -185,11 +182,10 @@ export default function Home() {
         functionName: 'createStrategy',
         args: [
           contractArgs.targetToken,
-          contractArgs.fundingThreshold,
+          contractArgs.designatedCreator,
           contractArgs.targetAmount,
-          contractArgs.creatorStake,
-          contractArgs.fundingDeadline,
-          contractArgs.executionDeadline,
+          contractArgs.deadline,
+          contractArgs.milestoneUnlockBps,
         ],
       });
 

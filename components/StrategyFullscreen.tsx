@@ -145,10 +145,10 @@ export default function StrategyFullscreen({
               </div>
               <div className="bg-gray-50 dark:bg-zinc-900/50 p-4 rounded-lg border border-gray-200 dark:border-white/10">
                 <p className="text-xs uppercase tracking-[0.2em] font-black text-zinc-400 mb-1">
-                  Timeline
+                  Days Remaining
                 </p>
                 <p className="text-2xl font-black text-gray-900 dark:text-white">
-                  {Math.ceil((strategy.deadline - strategy.createdAt) / (24 * 60 * 60 * 1000))}d
+                  {strategy.daysRemaining || Math.ceil((strategy.deadline - Date.now()) / (24 * 60 * 60 * 1000))}d
                 </p>
               </div>
             </div>
@@ -165,7 +165,7 @@ export default function StrategyFullscreen({
                     className="flex items-center justify-between p-3 bg-gray-50 dark:bg-zinc-900/50 rounded-lg border border-gray-200 dark:border-white/10"
                   >
                     <span className="font-bold text-gray-900 dark:text-white">
-                      {milestone.name}
+                      {milestone.title}
                     </span>
                     <span className="font-black text-blue-600 dark:text-blue-500">
                       {milestone.unlockPercentage}%
