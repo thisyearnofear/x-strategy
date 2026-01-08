@@ -200,6 +200,8 @@ export default function Home() {
           <NavigationHUD
             onCreateStrategy={handleCreateStrategy}
             onFilterChange={handleFilterChange}
+            isZenMode={isZenMode}
+            onZenModeToggle={setIsZenMode}
           />
 
           {/* Strategy Preview (Intermediate State) */}
@@ -230,19 +232,7 @@ export default function Home() {
         </>
       )}
 
-      {/* Zen Mode Toggle (Always Visible or Floating) */}
-      <button
-        onClick={() => setIsZenMode(!isZenMode)}
-        className="fixed bottom-6 right-6 z-[60] p-3 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white transition-all shadow-xl group"
-        aria-label="Toggle Zen Mode"
-      >
-        <div className="flex items-center gap-2 px-1">
-          <span className="text-lg">{isZenMode ? "🖥️" : "✨"}</span>
-          <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 text-xs font-bold uppercase tracking-widest whitespace-nowrap">
-            {isZenMode ? "Show Interface" : "Zen Mode"}
-          </span>
-        </div>
-      </button>
+
     </>
   );
 }

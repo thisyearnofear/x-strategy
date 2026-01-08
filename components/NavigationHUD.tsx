@@ -16,12 +16,16 @@ interface NavigationHUDProps {
     status?: StrategyStatus[];
     category?: StrategyCategory[];
   };
+  isZenMode?: boolean;
+  onZenModeToggle?: (enabled: boolean) => void;
 }
 
 export default function NavigationHUD({
   onCreateStrategy,
   onFilterChange,
   activeFilters = {},
+  isZenMode = false,
+  onZenModeToggle,
 }: NavigationHUDProps) {
   const [showFilters, setShowFilters] = React.useState(false);
   const [showExplainer, setShowExplainer] = React.useState(false);
@@ -124,6 +128,15 @@ export default function NavigationHUD({
           </div>
 
           <div className="flex items-center gap-4 pointer-events-auto">
+            {/* Zen Mode Toggle */}
+            <button
+              onClick={() => onZenModeToggle?.(!isZenMode)}
+              className="p-2 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-sm"
+              aria-label="Toggle Zen Mode"
+              title={isZenMode ? "Show Interface" : "Zen Mode"}
+            >
+              {isZenMode ? "🖥️" : "✨"}
+            </button>
             {/* Theme Toggle */}
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
