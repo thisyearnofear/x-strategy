@@ -17,6 +17,7 @@ import {
 import { useTheme } from "next-themes";
 import StrategyPreview from "../components/StrategyPreview";
 import StrategyFullscreen from "../components/StrategyFullscreen";
+import { useNotifications, getErrorMessage } from "../lib/hooks/useNotifications";
 
 export default function Home() {
   const [selectedStrategy, setSelectedStrategy] = useState<Strategy | null>(
@@ -116,66 +117,45 @@ export default function Home() {
   };
 
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
-
-  const handlePublishStrategy = async (strategy: Partial<SimplifiedStrategy>) => {
-    if (!address || !writeContractAsync) return;
-
-    try {
-      console.log('Publishing simplified strategy:', strategy);
-
-      // Convert SimplifiedStrategy to contract arguments
-      const contractArgs = {
-        targetToken: (strategy.targetToken || '0x0000000000000000000000000000000000000000') as `0x${string}`,
-        designatedCreator: (strategy.creatorAddress || address || '0x0000000000000000000000000000000000000000') as `0x${string}`,
-        targetAmount: strategy.targetAmount || BigInt(0),
-        deadline: BigInt(strategy.executionDeadline || Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60), // Default to 30 days
-        milestoneUnlockBps: [2500, 5000, 7500, 10000], // 25%, 50%, 75%, 100% - example values
-      };
-
-      // Call factory contract to create strategy
-      const tx = await writeContractAsync({
-        address: FACTORY_ADDRESS,
-        abi: XStrategyFactoryABI,
-        functionName: 'createStrategy',
-        args: [
-          contractArgs.targetToken,
-          contractArgs.designatedCreator,
-          contractArgs.targetAmount,
-          contractArgs.deadline,
-          contractArgs.milestoneUnlockBps,
-        ],
-      });
-
-      console.log('Strategy creation transaction:', tx);
-      setIsBuilderOpen(false);
-      alert('Strategy created successfully! Transaction: ' + tx);
-    } catch (error) {
-      console.error('Error creating strategy:', error);
-      alert('Error creating strategy: ' + (error as Error).message);
-    }
-  };
+  const { addNotification } = useNotifications();
 
   const handleCreateStrategy = () => {
     setIsBuilderOpen(true);
   };
 
-  // Deploy Simplified Strategy via Factory
+  // Deploy Strategy via Factory
   const handlePublishSimplifiedStrategy = async (strategy: Partial<SimplifiedStrategy>) => {
     if (!address || !writeContractAsync) return;
+
+    if (!strategy.targetToken || strategy.targetToken === '0x0000000000000000000000000000000000000000') {
+      addNotification({
+        type: 'error',
+        title: 'Missing Token',
+        message: 'Please select a target token for the strategy.',
+      });
+      return;
+    }
+
+    if (!strategy.targetAmount || strategy.targetAmount <= BigInt(0)) {
+      addNotification({
+        type: 'error',
+        title: 'Invalid Target Amount',
+        message: 'Please set a target amount greater than 0.',
+      });
+      return;
+    }
 
     try {
       console.log('Publishing simplified strategy:', strategy);
 
-      // Convert SimplifiedStrategy to contract arguments
       const contractArgs = {
-        targetToken: (strategy.targetToken || '0x0000000000000000000000000000000000000000') as `0x${string}`,
-        designatedCreator: (strategy.creatorAddress || address || '0x0000000000000000000000000000000000000000') as `0x${string}`,
-        targetAmount: strategy.targetAmount || BigInt(0),
-        deadline: BigInt(strategy.executionDeadline || Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60), // Default to 30 days
-        milestoneUnlockBps: [2500, 5000, 7500, 10000], // 25%, 50%, 75%, 100% - example values
+        targetToken: strategy.targetToken as `0x${string}`,
+        designatedCreator: (strategy.creatorAddress || address) as `0x${string}`,
+        targetAmount: strategy.targetAmount,
+        deadline: BigInt(strategy.executionDeadline || Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60),
+        milestoneUnlockBps: [2500, 5000, 7500, 10000],
       };
 
-      // Call factory contract to create strategy
       const tx = await writeContractAsync({
         address: FACTORY_ADDRESS,
         abi: XStrategyFactoryABI,
@@ -191,42 +171,87 @@ export default function Home() {
 
       console.log('Strategy creation transaction:', tx);
       setIsBuilderOpen(false);
-      alert('Strategy created successfully! Transaction: ' + tx);
+      addNotification({
+        type: 'success',
+        title: 'Strategy Created Successfully',
+        message: `Transaction submitted: ${tx}. The designated creator can now opt in.`,
+        action: {
+          label: 'View Transaction',
+          onClick: () => {
+            window.open(`https://basescan.org/tx/${tx}`, '_blank');
+          },
+        },
+      });
     } catch (error) {
       console.error('Error creating strategy:', error);
-      alert('Error creating strategy: ' + (error as Error).message);
+      addNotification({
+        type: 'error',
+        title: 'Strategy Creation Failed',
+        message: getErrorMessage(error),
+      });
     }
   };
 
-  // Interactions
   const handleOptIn = async (strategyId: string, stake: bigint) => {
-    // Assuming strategyId is the address for MVP, or we need a map
-    // For now, let's treat ID as address if it starts with 0x, otherwise mock or error
     if (!strategyId.startsWith("0x")) {
-      alert("Strategy address not found (Mock ID).");
+      addNotification({
+        type: 'error',
+        title: 'Invalid Strategy',
+        message: 'Strategy address not found',
+      });
       return;
     }
 
-    await writeContractAsync({
-      address: strategyId as `0x${string}`,
-      abi: XStrategyABI,
-      functionName: "optIn",
-      value: stake,
-    });
+    try {
+      await writeContractAsync({
+        address: strategyId as `0x${string}`,
+        abi: XStrategyABI,
+        functionName: "optIn",
+        value: stake,
+      });
+      addNotification({
+        type: 'success',
+        title: 'Opt-in Successful',
+        message: 'You have successfully opted into this strategy.',
+      });
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        title: 'Opt-in Failed',
+        message: getErrorMessage(error),
+      });
+    }
   };
 
   const handleContribute = async (strategyId: string, amount: bigint) => {
     if (!strategyId.startsWith("0x")) {
-      alert("Strategy address not found (Mock ID).");
+      addNotification({
+        type: 'error',
+        title: 'Invalid Strategy',
+        message: 'Strategy address not found',
+      });
       return;
     }
 
-    await writeContractAsync({
-      address: strategyId as `0x${string}`,
-      abi: XStrategyABI,
-      functionName: "contribute",
-      value: amount,
-    });
+    try {
+      await writeContractAsync({
+        address: strategyId as `0x${string}`,
+        abi: XStrategyABI,
+        functionName: "contribute",
+        value: amount,
+      });
+      addNotification({
+        type: 'success',
+        title: 'Contribution Submitted',
+        message: 'Your contribution has been submitted and is pending confirmation.',
+      });
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        title: 'Contribution Failed',
+        message: getErrorMessage(error),
+      });
+    }
   };
 
   const handleFilterChange = (filters: any) => {

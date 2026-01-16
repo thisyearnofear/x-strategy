@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from "react";
 import { Strategy, StrategyStatus } from "../lib/types/strategy";
+import { useNotifications, getErrorMessage } from "../lib/hooks/useNotifications";
 
 interface StrategyModalProps {
   strategy: Strategy | null;
@@ -25,6 +26,7 @@ export default function StrategyModal({
 }: StrategyModalProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [contributionAmount, setContributionAmount] = useState<string>("0.1");
+  const { addNotification } = useNotifications();
 
   // Close on ESC key
   useEffect(() => {
@@ -39,43 +41,61 @@ export default function StrategyModal({
 
   if (!isOpen || !strategy) return null;
 
-  const statusColors = {
-    [StrategyStatus.PENDING_CREATOR]: "bg-yellow-500",
-    [StrategyStatus.ACTIVE]: "bg-blue-500",
-    [StrategyStatus.ENDING_SOON]: "bg-red-500",
-    [StrategyStatus.COMPLETED_SUCCESS]: "bg-green-500",
-    [StrategyStatus.COMPLETED_FAILURE]: "bg-gray-500",
-    [StrategyStatus.UNWINDING]: "bg-orange-500",
-    [StrategyStatus.CANCELLED]: "bg-gray-600",
-    [StrategyStatus.DRAFT]: "bg-gray-400",
-  };
-
   const handleOptInClick = async () => {
     if (!onOptIn) return;
     try {
       setIsProcessing(true);
       await onOptIn(strategy.id, strategy.creatorStake);
       setIsProcessing(false);
+      addNotification({
+        type: 'success',
+        title: 'Opt-in Successful',
+        message: `You have opted into the strategy. The stake will be refunded upon successful completion.`,
+      });
     } catch (e) {
       console.error(e);
       setIsProcessing(false);
+      addNotification({
+        type: 'error',
+        title: 'Opt-in Failed',
+        message: getErrorMessage(e),
+      });
     }
   };
 
   const handleContributeClick = async () => {
     if (!onContribute) return;
+
+    const amount = parseFloat(contributionAmount);
+
+    if (isNaN(amount) || amount <= 0) {
+      addNotification({
+        type: 'error',
+        title: 'Invalid Amount',
+        message: 'Please enter a valid contribution amount greater than 0.',
+      });
+      return;
+    }
+
     try {
       setIsProcessing(true);
-      // Convert to BigInt (simplified for UI)
-      const amountWei = BigInt(parseFloat(contributionAmount) * 1e18);
+      const amountWei = BigInt(amount * 1e18);
       await onContribute(strategy.id, amountWei);
       setIsProcessing(false);
-      alert(
-        "Contribution Pending! The Operator will execute your swap shortly."
-      );
+      addNotification({
+        type: 'success',
+        title: 'Contribution Pending',
+        message: 'Your contribution has been submitted. The Operator will execute the swap shortly.',
+      });
+      setContributionAmount("0.1");
     } catch (e) {
       console.error(e);
       setIsProcessing(false);
+      addNotification({
+        type: 'error',
+        title: 'Contribution Failed',
+        message: getErrorMessage(e),
+      });
     }
   };
 

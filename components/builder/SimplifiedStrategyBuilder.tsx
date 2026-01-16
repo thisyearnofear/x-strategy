@@ -93,6 +93,37 @@ export default function SimplifiedStrategyBuilder({
 
     const handlePublish = () => {
         if (onPublish) {
+            // Validation
+            if (!draft.targetToken || draft.targetToken === '') {
+                alert('Please select a target token');
+                return;
+            }
+
+            if (draft.targetDescription.trim() === '') {
+                alert('Please enter a target description');
+                return;
+            }
+
+            if (draft.targetCount <= 0) {
+                alert('Target count must be greater than 0');
+                return;
+            }
+
+            if (draft.targetAmount <= 0) {
+                alert('Target amount must be greater than 0');
+                return;
+            }
+
+            if (draft.fundingDays <= 0) {
+                alert('Funding period must be greater than 0 days');
+                return;
+            }
+
+            if (draft.executionDays <= 0) {
+                alert('Execution period must be greater than 0 days');
+                return;
+            }
+
             // Convert draft to SimplifiedStrategy format
             const strategy: Partial<SimplifiedStrategy> = {
                 targetDescription: `${draft.targetCount} ${draft.targetDescription} to ${draft.targetPlatform}`,

@@ -108,7 +108,9 @@ contract XStrategyFactory is Ownable, Pausable {
         address designatedCreator,
         uint256 targetAmount,
         uint256 deadline,
-        uint32[] calldata milestoneUnlockBps
+        uint32[] calldata milestoneUnlockBps,
+        address priceFeed,
+        address ethUsdPriceFeed
     ) external whenNotPaused returns (address strategy) {
         require(token != address(0), "Invalid token");
         require(designatedCreator != address(0), "Invalid creator");
@@ -131,7 +133,9 @@ contract XStrategyFactory is Ownable, Pausable {
             deadline,
             milestoneUnlockBps,
             splitMain,
-            defaultOperator
+            defaultOperator,
+            priceFeed,
+            ethUsdPriceFeed
         );
 
         strategy = address(newStrategy);
